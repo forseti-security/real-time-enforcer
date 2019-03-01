@@ -123,7 +123,7 @@ def callback(message):
     log = {}
     try:
         resource = log_to_resource(message.data)
-        log['resource'] = str(resource)
+        log['resource'] = resource.resource_data
     except (
         json.JSONDecodeError,
         UnrecognizedResourceTypeError,
