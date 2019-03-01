@@ -42,15 +42,6 @@ def log_to_resource(log_message, **kargs):
     constructor  '''
 
     map_log_messsge_to_resource_data = {
-            "gke_cluster": {
-                    "resource_type": [
-                        "resource.type",
-                        lambda x: 'container.clusters'
-                    ],
-                    "resource_name": "resource.labels.cluster_name",
-                    "resource_location": "resource.labels.location",
-                    "project_id": "resource.labels.project_id"
-            },
             "cloudsql_database": {
                     "resource_type": [
                         "resource.type",
@@ -87,18 +78,6 @@ def log_to_resource(log_message, **kargs):
                     ],
                     "resource_name": "resource.labels",
                     "project_id": "resource.labels.project_id"
-            },
-            "gce_instance": {
-                    "resource_type": [
-                        "resource.type",
-                        lambda x: 'compute.instances'
-                    ],
-                    "resource_name": [
-                        "protoPayload.resourceName",
-                        lambda x: x.split('/')[-1]
-                    ],
-                    "project_id": "resource.labels.project_id",
-                    "resource_location": "resource.labels.zone"
             }
     }
 
