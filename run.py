@@ -141,9 +141,10 @@ def log_to_resource(log_message, **kargs):
 
 def callback(message):
 
+    log = {}
     try:
         resource = log_to_resource(message.data)
-        log = {'resource': str(resource)}
+        log['resource'] = str(resource)
     except (
         json.JSONDecodeError,
         UnrecognizedResourceTypeError,
@@ -152,6 +153,7 @@ def callback(message):
         # These exceptions are expected for messages that don't appear to be
         # valid AuditLog entries. We acknowledge the messages and move on.
         message.ack()
+        return
 
     
     # If we were able to find a resource, now we can check policy
