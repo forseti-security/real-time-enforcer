@@ -112,7 +112,7 @@ This example uses the public image from Dockerhub, and should be altered if you 
 
 ```shell
 docker run -ti --rm \
-    --link opa-server
+    --link opa-server \
     -e PROJECT_ID=$project_id \
     -e SUBSCRIPTION_NAME=micromanager \
     -e OPA_URL="http://opa-server:8181/v1/data" \
