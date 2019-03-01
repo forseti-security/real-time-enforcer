@@ -57,6 +57,31 @@ gcloud pubsub subscriptions create micromanager \
   --project=$project_id
 
 ```
+
+## Setting up application credentials
+
+Our application needs access to subscribe to the Pub/Sub subscription for messages, and access to modify resources for policy enforcement. With some modification, the example script can be updated to separate credentials for the enforcement step, but for simplicity the example uses the Application Default Credentials for everything.
+
+```shell
+# Create a new service account for running the application
+gcloud iam service-accounts create micromanager --project=$project_id
+
+# Create a service account key and save it
+gcloud iam service-accounts keys create micromanager_credentials.json \
+  --iam-account=micromanager@$project_id.iam.gserviceaccount.com
+
+# Add policy to access subscription
+gcloud beta pubsub subscriptions add-iam-policy-binding micromanager \
+  --member=serviceAccount:micromanager@$project_id.iam.gserviceaccount.com \
+  --role=roles/pubsub.subscriber \
+  --project=$project_id
+
+# Add policy required for enforcement
+### I'm omitting this for security reasons. I recommend deciding what policies
+### you wish to enforce, and research what permissions are need to enforce them
+### for your organization
+```
+
 # Running OPA with our policies
 
 We'll be using the [Open Policy Agent](https://www.openpolicyagent.org/) docker image with policies located in a folder named _policy_. You can use your own policies as long as they match the schema used by Micromanager.
