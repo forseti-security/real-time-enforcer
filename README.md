@@ -90,7 +90,7 @@ This example uses the public image from Dockerhub, and should be altered if you 
 docker run -ti --rm \
     --link opa-server
     -e PROJECT_ID=$project_id \
-    -e SUBSCRIPTION_NAME=micromanager-events \
+    -e SUBSCRIPTION_NAME=micromanager \
     -e OPA_URL="http://opa-server:8181/v1/data" \
     -e GOOGLE_APPLICATION_CREDENTIALS=/opt/micromanager/etc/<credentials_file_name> \
     -v <path_to_credentials>:/opt/micromanager/etc \
