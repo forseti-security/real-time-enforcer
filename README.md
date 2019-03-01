@@ -20,15 +20,14 @@ organization_id='000000000000' # The numeric ID of the organization
 
 ## Setting up the Stackdriver log export
 
-First, we'll configure a log export to send specific logs to a pub/sub topic. In this example, we will export logs from the entire organization so we catch events from each project. We will filter for AuditLog entries where the _methodName_ contains the strings _.create_, _.update_, or _.insert_. You can tweak the export and filter to suit your needs.
+First, we'll configure a log export to send specific logs to a pub/sub topic. In this example, we will export logs from the entire organization so we catch events from each project. We will filter for AuditLog entries where the severity is not `ERROR`. You can tweak the export and filter to suit your needs.
 
 ```bash
 gcloud beta logging sinks create micromanager-events \
   pubsub.googleapis.com/projects/$project_id/topics/micromanager-events
   --organization=$organization_id \
   --include-children \
-  --log-filter='protoPayload.methodName: (".create" OR ".update" OR ".insert") protoPayload."@type"="type.googleapis.com/google.cloud.audit.AuditLog"'
-
+  --log-filter='protoPayload."@type"="type.googleapis.com/google.cloud.audit.AuditLog" severity!="ERROR"'
 ```
 
 ## Setting up the Pub/Sub resources
