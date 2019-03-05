@@ -8,6 +8,6 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     pip install -r /app/requirements.txt
 
-COPY run.py /app/
+COPY *.py /app/
 
 ENTRYPOINT ["/usr/bin/dumb-init", "/usr/local/bin/python", "/app/run.py"]
