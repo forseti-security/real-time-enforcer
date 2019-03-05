@@ -9,22 +9,23 @@ from micromanager.resources import Resource
 
 from stackdriver import StackdriverParser
 
-# Load some environment variables
-PROJECT_ID = os.environ.get('PROJECT_ID')
-SUBSCRIPTION_NAME = os.environ.get('SUBSCRIPTION_NAME')
-OPA_URL = os.environ.get('OPA_URL')
+# Load configuration
+project_id = os.environ.get('PROJECT_ID')
+subscription_name = os.environ.get('SUBSCRIPTION_NAME')
+opa_url = os.environ.get('OPA_URL')
 
 # Instantiate our micromanager
 mmconfig = {
     'policy_engines': [
         {
             'type': 'opa',
-            'url': OPA_URL
+            'url': opa_url
         }
     ]
 }
 
 mm = MicroManager(mmconfig)
+print("Configured policies:", json.dumps(mm.get_configured_policies(),indent=2))
 
 
 def callback(pubsub_message):
@@ -86,8 +87,8 @@ if __name__ == "__main__":
     subscriber = pubsub.SubscriberClient(credentials=app_creds)
 
     subscription_path = 'projects/{project_id}/subscriptions/{sub}'.format(
-        project_id=PROJECT_ID,
-        sub=SUBSCRIPTION_NAME
+        project_id=project_id,
+        sub=subscription_name
     )
 
     future = subscriber.subscribe(
