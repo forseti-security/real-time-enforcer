@@ -1,4 +1,4 @@
-# Example: Using a Stackdriver log export to trigger policy evaluation and enforcement
+# Using a Stackdriver log export to trigger policy evaluation and enforcement
 
 This document will walk you through setting up a Stackdriver Log Export for your entire organization, filtering for AuditLog entries that create or update resources, and sending those log entries to a Pub/Sub topic. We will subscribe to that topic and evaluate each incoming log message and attempt to map it to a resource that *Micromanager* recognizes. If so, we'll evaluate it with micromanager and any configured policy engines.
 
@@ -116,6 +116,7 @@ docker run -ti --rm \
     -e PROJECT_ID=$project_id \
     -e SUBSCRIPTION_NAME=micromanager \
     -e OPA_URL="http://opa-server:8181/v1/data" \
+    -e ENFORCING=true \
     -e GOOGLE_APPLICATION_CREDENTIALS=/opt/micromanager/etc/credentials.json \
     -v <path_to_credentials_file>:/opt/micromanager/etc/credentials.json \
     cleardata/micromanager:stackdriver-pubsub

@@ -13,6 +13,7 @@ from stackdriver import StackdriverParser
 project_id = os.environ.get('PROJECT_ID')
 subscription_name = os.environ.get('SUBSCRIPTION_NAME')
 opa_url = os.environ.get('OPA_URL')
+enforce_policy = os.environ.get('ENFORCE', '').lower() == 'true'
 
 # Instantiate our micromanager
 mmconfig = {
@@ -25,7 +26,12 @@ mmconfig = {
 }
 
 mm = MicroManager(mmconfig)
-print("Configured policies:", json.dumps(mm.get_configured_policies(),indent=2))
+
+running_config = {
+    'configured_policies': mm.get_configured_policies(),
+    'policy_enforcement': "enabled" if enforce_policy else "disabled"
+}
+print(json.dumps(running_config))
 
 
 def callback(pubsub_message):
@@ -60,9 +66,10 @@ def callback(pubsub_message):
         log['violation_count'] = len(v)
         log['remediation_count'] = 0
 
-        for (engine, violation) in v:
-            engine.remediate(resource, violation)
-            log['remediation_count'] += 1
+        if enforce_policy:
+            for (engine, violation) in v:
+                engine.remediate(resource, violation)
+                log['remediation_count'] += 1
 
     except Exception as e:
         # Catch any other exceptions so we can acknowledge the message.
