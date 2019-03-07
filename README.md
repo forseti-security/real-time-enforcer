@@ -1,6 +1,8 @@
-# Using a Stackdriver log export to trigger policy evaluation and enforcement
+# Forseti Policy Enforcer
 
-This document will walk you through setting up a Stackdriver Log Export for your entire organization, filtering for AuditLog entries that create or update resources, and sending those log entries to a Pub/Sub topic. We will subscribe to that topic and evaluate each incoming log message and attempt to map it to a resource that *Micromanager* recognizes. If so, we'll evaluate it with micromanager and any configured policy engines.
+The Forseti Policy Enforcer uses a Stackdriver log export (to a Pub/Sub topic) to trigger policy evaluation and enforcement
+
+This document will walk you through setting up a Stackdriver Log Export for your entire organization, filtering for AuditLog entries that create or update resources, and sending those log entries to a Pub/Sub topic. We will subscribe to that topic and evaluate each incoming log message and attempt to map it to a resource that [micromanager](https://github.com/cleardataeng/micromanager) recognizes. If so, we'll evaluate it with micromanager against an [Open Policy Agent](https://www.openpolicyagent.org/) instance.
 
 If you prefer to operate on a specific folder or project, the log export commands in this document should be altered appropriately.
 
@@ -20,14 +22,14 @@ organization_id='000000000000' # The numeric ID of the organization
 
 ## Setting up the Stackdriver log export
 
-First, we'll configure a log export to send specific logs to a pub/sub topic. In this example, we will export logs from the entire organization so we catch events from each project. We will filter for AuditLog entries where the severity is not `ERROR`. You can tweak the export and filter to suit your needs.
+First, we'll configure a log export to send specific logs to a pub/sub topic. In this example, we will export logs from the entire organization so we catch events from each project. We will filter for AuditLog entries where the severity is not `ERROR`. We're also filtering out logs from the `k8s.io` service because they're noisy, and any methodthat includes the string `delete`. You can tweak the export and filter to suit your needs.
 
 ```bash
 gcloud beta logging sinks create micromanager-events \
   pubsub.googleapis.com/projects/$project_id/topics/micromanager-events
   --organization=$organization_id \
   --include-children \
-  --log-filter='protoPayload."@type"="type.googleapis.com/google.cloud.audit.AuditLog" severity!="ERROR"'
+  --log-filter='protoPayload."@type"="type.googleapis.com/google.cloud.audit.AuditLog" severity!="ERROR" protoPayload.serviceName!="k8s.io" NOT protoPayload.methodName: "delete"' 
 ```
 
 ## Setting up the Pub/Sub resources
@@ -95,14 +97,14 @@ docker run -d \
 
 # Building our docker image
 
-The code is all in the `run.py` script in this directory. The majority of the code is just normalizing the Stackdrive AuditLog messages into a standard format that we can use to find the resource in the google API. After we identify the resource we pass it to micromanager and iterate over the violations, remediating them one-at-a-time.
+The enforcement code is all in the `run.py` script in this directory. Stackdriver logs are parsed in `stackdriver.py` which attempts to extract the data we need to find a resource in the Google APIs. After we identify the resource we pass it to micromanager and iterate over the violations, remediating them one-at-a-time.
 
 A public docker image is available on dockerhub which you can use as-is if it suits your needs. Otherwise you can alter the code either run it directly or build your own container image to run.
 
 The docker image is based on the `python:slim` image, and can be built using the following command:
 
 ```shell
-docker build -t micromanager .
+docker build -t forseti-policy-enforcer .
 ```
 
 
@@ -116,8 +118,8 @@ docker run -ti --rm \
     -e PROJECT_ID=$project_id \
     -e SUBSCRIPTION_NAME=micromanager \
     -e OPA_URL="http://opa-server:8181/v1/data" \
-    -e ENFORCING=true \
+    -e ENFORCE=true \
     -e GOOGLE_APPLICATION_CREDENTIALS=/opt/micromanager/etc/credentials.json \
     -v <path_to_credentials_file>:/opt/micromanager/etc/credentials.json \
-    cleardata/micromanager:stackdriver-pubsub
+    cleardata/forseti-policy-enforcer
 ```
