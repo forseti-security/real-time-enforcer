@@ -26,7 +26,7 @@ First, we'll configure a log export to send specific logs to a pub/sub topic. In
 
 ```bash
 gcloud beta logging sinks create micromanager-events \
-  pubsub.googleapis.com/projects/$project_id/topics/micromanager-events
+  pubsub.googleapis.com/projects/$project_id/topics/micromanager-events \
   --organization=$organization_id \
   --include-children \
   --log-filter='protoPayload."@type"="type.googleapis.com/google.cloud.audit.AuditLog" severity!="ERROR" protoPayload.serviceName!="k8s.io" NOT protoPayload.methodName: "delete"' 
