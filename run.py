@@ -15,6 +15,11 @@ subscription_name = os.environ.get('SUBSCRIPTION_NAME')
 opa_url = os.environ.get('OPA_URL')
 enforce_policy = os.environ.get('ENFORCE', '').lower() == 'true'
 
+# We're using the application default credentials, but defining them
+# explicitly so its easy to plug-in credentials using your own preferred
+# method
+app_creds, _ = google.auth.default()
+
 # Instantiate our micromanager
 mmconfig = {
     'policy_engines': [
@@ -66,7 +71,7 @@ def callback(pubsub_message):
 
     try:
         log['asset_info'] = asset_info
-        resource = Resource.factory('gcp', asset_info)
+        resource = Resource.factory('gcp', asset_info, credentials=app_creds)
 
         v = mm.violations(resource)
         log['violation_count'] = len(v)
@@ -91,11 +96,6 @@ def callback(pubsub_message):
 
 
 if __name__ == "__main__":
-
-    # We're using the application default credentials, but defining them
-    # explicitly so its easy to plug-in credentials using your own preferred
-    # method
-    app_creds, _ = google.auth.default()
 
     subscriber = pubsub.SubscriberClient(credentials=app_creds)
 
