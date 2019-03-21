@@ -30,6 +30,27 @@ class StackdriverParser():
         return data
 
     @classmethod
+    def _operation_type(cls, res_type, method_name):
+        ''' We only care about _events_ that alter assets. Maintaining this
+        list is going to be annoying. Long term, this entire class  should be
+        replaced when google provides a real-time event delivery solution '''
+
+        l = method_name.split('.')[-1]
+        if l in ['list', 'get', 'List']:
+            return 'read'
+
+        if l in ['create', 'update', 'InsertDataset', 'PatchDataset', 'setIamPermissions', 'SetIamPolicy']:
+            return 'write'
+
+        if l in ['delete']:
+            return 'delete'
+
+        else:
+            return 'unknown'
+
+
+
+    @classmethod
     def _extract_asset_info(cls, res_type, message):
 
         # just shortening the many calls to jmespath throughout this function
@@ -37,22 +58,36 @@ class StackdriverParser():
         def prop(exp):
             return jmespath.search(exp, message)
 
-        if res_type == 'cloudsql_database':
+        method_name = prop('protoPayload.methodName')
+        operation_type = cls._operation_type(res_type, method_name)
+
+        if res_type == 'cloudsql_database' and method_name.startswith('cloudsql.instances'):
             resource_type = 'sqladmin.instances'
             resource_name = prop('resource.labels.database_id').split(':')[-1]
             resource_location = prop('resource.labels.region')
             project_id = prop('resource.labels.project_id')
-        elif res_type == "gcs_bucket":
-            if prop('protoPayload.methodName').endswith('.setIamPermissions'):
-                resource_type = 'storage.buckets.iam'
-            else:
-                resource_type = 'storage.buckets'
+
+        elif res_type == "gcs_bucket" and method_name.startswith('storage.buckets'):
+            resource_type = 'storage.buckets'
             resource_name = prop("resource.labels.bucket_name")
             resource_location = prop("resource.labels.location")
             project_id = prop("resource.labels.project_id")
-        elif res_type == "bigquery_dataset":
+
+        elif res_type == "gcs_bucket" and method_name == 'storage.setIamPermissions':
+            resource_type = 'storage.buckets.iam'
+            resource_name = prop("resource.labels.bucket_name")
+            resource_location = prop("resource.labels.location")
+            project_id = prop("resource.labels.project_id")
+
+        elif res_type == "bigquery_dataset" and "DatasetService" in method_name:
             resource_type = 'bigquery.datasets'
             resource_name = prop("resource.labels.dataset_id")
+            resource_location = ''
+            project_id = prop("resource.labels.project_id")
+
+        elif res_type == "project" and method_name == 'SetIamPolicy':
+            resource_type = 'cloudresourcemanager.projects.iam'
+            resource_name = prop("resource.labels.project_id")
             resource_location = ''
             project_id = prop("resource.labels.project_id")
         else:
@@ -62,5 +97,7 @@ class StackdriverParser():
             'resource_type': resource_type,
             'resource_name': resource_name,
             'resource_location': resource_location,
-            'project_id': project_id
+            'project_id': project_id,
+            'method_name': method_name,
+            'operation_type': operation_type
         }
