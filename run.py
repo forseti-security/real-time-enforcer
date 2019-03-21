@@ -52,6 +52,12 @@ def callback(pubsub_message):
             # We did not recognize any assets in this message
             pubsub_message.ack()
             return
+
+        if asset_info.get('operation_type') != 'write':
+            # No changes, no need to check anything
+            pubsub_message.ack()
+            return
+
     except Exception:
         # If we fail to get asset info from the message, the message must be
         # bad
