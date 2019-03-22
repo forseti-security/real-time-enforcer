@@ -77,6 +77,12 @@ gcloud beta pubsub subscriptions add-iam-policy-binding micromanager \
   --role=roles/pubsub.subscriber \
   --project=$project_id
 
+# By default, logs will be printed to stdout. If you'd like to send them to stackdriver make sure to add the following permission
+# You'll also need to pass the `STACKDRIVER_LOGGING` environment variable to the docker image
+gcloud projects add-iam-policy-binding $project_id \
+  --role=roles/logging.logWriter \
+  --member=serviceAccount:micromanager@$project_id.iam.gserviceaccount.com
+
 # Add policy required for enforcement
 ### I'm omitting this for security reasons. I recommend deciding what policies
 ### you wish to enforce, and research what permissions are need to enforce them
@@ -119,6 +125,7 @@ docker run -ti --rm \
     -e SUBSCRIPTION_NAME=micromanager \
     -e OPA_URL="http://opa-server:8181/v1/data" \
     -e ENFORCE=true \
+    -e STACKDRIVER_LOGGING=false \
     -e GOOGLE_APPLICATION_CREDENTIALS=/opt/micromanager/etc/credentials.json \
     -v <path_to_credentials_file>:/opt/micromanager/etc/credentials.json \
     cleardata/forseti-policy-enforcer
