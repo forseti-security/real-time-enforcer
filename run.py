@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 from google.cloud import pubsub
 import google.auth
@@ -15,6 +16,7 @@ project_id = os.environ.get('PROJECT_ID')
 subscription_name = os.environ.get('SUBSCRIPTION_NAME')
 opa_url = os.environ.get('OPA_URL')
 enforce_policy = os.environ.get('ENFORCE', '').lower() == 'true'
+enforcement_delay = int(os.environ.get('ENFORCEMENT_DELAY', 0))
 stackdriver_logging = os.environ.get('STACKDRIVER_LOGGING', '').lower() == 'true'
 
 # We're using the application default credentials, but defining them
@@ -38,7 +40,9 @@ logger = Logger('forseti-policy-enforcer', stackdriver_logging, project_id, app_
 
 running_config = {
     'configured_policies': mm.get_configured_policies(),
-    'policy_enforcement': "enabled" if enforce_policy else "disabled"
+    'policy_enforcement': "enabled" if enforce_policy else "disabled",
+    'stackdriver_logging': "enabled" if stackdriver_logging else "disabled",
+    'enforcement_delay': enforcement_delay
 }
 logger(running_config)
 
@@ -46,6 +50,8 @@ logger(running_config)
 def callback(pubsub_message):
 
     log = {}
+
+    time.sleep(enforcement_delay)
 
     try:
         log_message = json.loads(pubsub_message.data)
