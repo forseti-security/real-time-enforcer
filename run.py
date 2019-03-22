@@ -8,12 +8,14 @@ from micromanager import MicroManager
 from micromanager.resources import Resource
 
 from stackdriver import StackdriverParser
+from logger import Logger
 
 # Load configuration
 project_id = os.environ.get('PROJECT_ID')
 subscription_name = os.environ.get('SUBSCRIPTION_NAME')
 opa_url = os.environ.get('OPA_URL')
 enforce_policy = os.environ.get('ENFORCE', '').lower() == 'true'
+stackdriver_logging = os.environ.get('STACKDRIVER_LOGGING', '').lower() == 'true'
 
 # We're using the application default credentials, but defining them
 # explicitly so its easy to plug-in credentials using your own preferred
@@ -32,11 +34,13 @@ mmconfig = {
 
 mm = MicroManager(mmconfig)
 
+logger = Logger('forseti-policy-enforcer', stackdriver_logging, project_id, app_creds)
+
 running_config = {
     'configured_policies': mm.get_configured_policies(),
     'policy_enforcement': "enabled" if enforce_policy else "disabled"
 }
-print(json.dumps(running_config))
+logger(running_config)
 
 
 def callback(pubsub_message):
@@ -91,7 +95,7 @@ def callback(pubsub_message):
         # Now allow the thread to raise the exception
         raise e
     finally:
-        print(json.dumps(log, separators=(',', ':')))
+        logger(log)
         pubsub_message.ack()
 
 
@@ -109,7 +113,7 @@ if __name__ == "__main__":
         callback=callback
     )
 
-    print("Listening for pubsub messages on {}...".format(subscription_path))
+    logger("Listening for pubsub messages on {}...".format(subscription_path))
 
     try:
         future.result()
