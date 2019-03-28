@@ -1,4 +1,3 @@
-import pprint
 import google.cloud.logging
 
 
@@ -24,7 +23,4 @@ class Logger:
                 self.sd_logger.log_text(data)
 
         else:
-            if isinstance(data, dict):
-                pprint.pprint(data)
-            else:
-                print(data)
+            print(data)
