@@ -67,7 +67,7 @@ def callback(pubsub_message):
     #  projects/<p>/logs/cloudaudit.googleapis.com%2Fdata_access
     #
     # try to only handle the normal activity logs
-    log_name_end = log_message.split('/')[-1]
+    log_name_end = log_message.get('logName', '').split('/')[-1]
     if log_name_end != 'cloudaudit.googleapis.com%2Factivity':
         logger('Message is not a standard activity log, discarding')
         pubsub_message.ack()
