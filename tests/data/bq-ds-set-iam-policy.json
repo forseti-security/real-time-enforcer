@@ -1,0 +1,67 @@
+{
+    "insertId": "hrutgge6gxqm",
+    "logName": "projects/fake-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "protoPayload": {
+        "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+        "authenticationInfo": {
+            "principalEmail": "user@example.com"
+        },
+        "authorizationInfo": [
+            {
+                "granted": true,
+                "permission": "bigquery.datasets.update",
+                "resource": "projects/fake-project/datasets/wooo"
+            }
+        ],
+        "metadata": {
+            "@type": "type.googleapis.com/google.cloud.audit.BigQueryAuditMetadata",
+            "datasetChange": {
+                "dataset": {
+                    "acl": {
+                        "policy": {
+                            "bindings": [
+                                {
+                                    "members": [
+                                        "projectEditor:fake-project"
+                                    ],
+                                    "role": "roles/bigquery.dataEditor"
+                                },
+                                {
+                                    "members": [
+                                        "projectOwner:fake-project",
+                                        "user:user@example.com"
+                                    ],
+                                    "role": "roles/bigquery.dataOwner"
+                                },
+                                {
+                                    "members": [
+                                        "allUsers",
+                                        "projectViewer:fake-project"
+                                    ],
+                                    "role": "roles/bigquery.dataViewer"
+                                }
+                            ],
+                            "etag": "BwWFK46Dgyk="
+                        }
+                    },
+                    "datasetName": "projects/fake-project/datasets/wooo"
+                }
+            }
+        },
+        "methodName": "google.iam.v1.IAMPolicy.SetIamPolicy",
+        "requestMetadata": {},
+        "resourceName": "projects/fake-project/datasets/wooo",
+        "serviceName": "bigquery.googleapis.com",
+        "status": {}
+    },
+    "receiveTimestamp": "2019-03-28T18:16:45.294057957Z",
+    "resource": {
+        "labels": {
+            "dataset_id": "wooo",
+            "project_id": "fake-project"
+        },
+        "type": "bigquery_dataset"
+    },
+    "severity": "NOTICE",
+    "timestamp": "2019-03-28T18:16:44.642Z"
+}

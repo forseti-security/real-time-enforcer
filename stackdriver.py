@@ -79,11 +79,12 @@ class StackdriverParser():
             resource_location = prop("resource.labels.location")
             project_id = prop("resource.labels.project_id")
 
-        elif res_type == "bigquery_dataset" and "DatasetService" in method_name:
-            resource_type = 'bigquery.datasets'
-            resource_name = prop("resource.labels.dataset_id")
-            resource_location = ''
-            project_id = prop("resource.labels.project_id")
+        elif res_type == "bigquery_dataset":
+            if "DatasetService" in method_name or 'SetIamPolicy' in method_name:
+                resource_type = 'bigquery.datasets'
+                resource_name = prop("resource.labels.dataset_id")
+                resource_location = ''
+                project_id = prop("resource.labels.project_id")
 
         elif res_type == "project" and method_name == 'SetIamPolicy':
             resource_type = 'cloudresourcemanager.projects.iam'
