@@ -52,10 +52,6 @@ def callback(pubsub_message):
 
     log = {}
 
-    if enforcement_delay:
-        logger('Delaying processing by %d seconds' % enforcement_delay)
-    time.sleep(enforcement_delay)
-
     try:
         log_message = json.loads(pubsub_message.data)
         logger('Successfully decoded json message')
@@ -96,6 +92,10 @@ def callback(pubsub_message):
         log['remediation_count'] = 0
 
         if enforce_policy:
+            if enforcement_delay:
+                logger('Delaying enforcement by %d seconds' % enforcement_delay)
+            time.sleep(enforcement_delay)
+
             for (engine, violation) in v:
                 logger('Executing remediation')
                 engine.remediate(resource, violation)
