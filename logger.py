@@ -21,9 +21,10 @@ class Logger:
 
     ''' Log to console or stackdriver '''
 
-    def __init__(self, log_name, stackdriver=False, project_id=None, credentials=None): 
+    def __init__(self, log_name, stackdriver=False, project_id=None, credentials=None, debugging=False):
 
         self.stackdriver = stackdriver
+        self.debugging = debugging
 
         if stackdriver:
             client = google.cloud.logging.Client(project=project_id, credentials=credentials)
@@ -39,3 +40,8 @@ class Logger:
 
         else:
             print(data)
+
+    # Separate function for debug logs
+    def debug(self, data):
+        if self.debugging:
+            self(data)

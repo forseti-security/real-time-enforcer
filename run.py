@@ -33,6 +33,7 @@ opa_url = os.environ.get('OPA_URL')
 enforce_policy = os.environ.get('ENFORCE', '').lower() == 'true'
 enforcement_delay = int(os.environ.get('ENFORCEMENT_DELAY', 0))
 stackdriver_logging = os.environ.get('STACKDRIVER_LOGGING', '').lower() == 'true'
+debug_logging = os.environ.get('DEBUG_LOGGING', '').lower() == 'true'
 
 # We're using the application default credentials, but defining them
 # explicitly so its easy to plug-in credentials using your own preferred
@@ -51,7 +52,7 @@ mmconfig = {
 
 mm = MicroManager(mmconfig)
 
-logger = Logger('forseti-policy-enforcer', stackdriver_logging, project_id, app_creds)
+logger = Logger('forseti-policy-enforcer', stackdriver_logging, project_id, app_creds, debug_logging)
 
 running_config = {
     'configured_policies': mm.get_configured_policies(),
@@ -69,11 +70,11 @@ def callback(pubsub_message):
         log_id = log_message.get('insertId', 'unknown-id')
     except (json.JSONDecodeError, AttributeError):
         # We can't parse the log message, nothing to do here
-        logger('Failure loading json, discarding message')
+        logger.debug('Failure loading json, discarding message')
         pubsub_message.ack()
         return
 
-    logger({'log_id': log_id, 'message': 'Received & decoded json message'})
+    logger.debug({'log_id': log_id, 'message': 'Received & decoded json message'})
 
     # normal activity logs have logName in this form:
     #  projects/<p>/logs/cloudaudit.googleapis.com%2Factivity
@@ -83,7 +84,7 @@ def callback(pubsub_message):
     # try to only handle the normal activity logs
     log_name_end = log_message.get('logName', '').split('/')[-1]
     if log_name_end != 'cloudaudit.googleapis.com%2Factivity':
-        logger({'log_id': log_id, 'message': 'Not an activity log, discarding'})
+        logger.debug({'log_id': log_id, 'message': 'Not an activity log, discarding'})
         pubsub_message.ack()
         return
 
@@ -93,7 +94,7 @@ def callback(pubsub_message):
 
         if len(assets) == 0:
             # We did not recognize any assets in this message
-            logger({
+            logger.debug({
                 'log_id': log_id,
                 'message': 'No recognized assets in log'
             })
@@ -104,7 +105,7 @@ def callback(pubsub_message):
     except Exception as e:
         # If we fail to get asset info from the message, the message must be
         # bad
-        logger({
+        logger.debug({
             'log_id': log_id,
             'message': 'Exception while parsing message for asset details',
             'details': str(e)
@@ -122,7 +123,7 @@ def callback(pubsub_message):
 
         if asset_info.get('operation_type') != 'write':
             # No changes, no need to check anything
-            logger({'log_id': log_id,
+            logger.debug({'log_id': log_id,
                     'message': 'Message is not a create/update, nothing to do'})
             pubsub_message.ack()
             continue
@@ -130,13 +131,13 @@ def callback(pubsub_message):
         try:
             resource = Resource.factory('gcp', asset_info, credentials=app_creds)
         except Exception as e:
-            logger({'log_id': log_id,
+            logger.debug({'log_id': log_id,
                     'message': 'Internal failure in micromanager',
                     'details': str(e)})
             pubsub_message.ack()
             continue
 
-        logger({'log_id': log_id,
+        logger.debug({'log_id': log_id,
                 'message': 'Analyzing for violations'})
 
         try:
@@ -144,25 +145,25 @@ def callback(pubsub_message):
             log['violation_count'] = len(v)
             log['remediation_count'] = 0
         except Exception as e:
-            logger({'log_id': log_id,
+            logger.debug({'log_id': log_id,
                     'message': 'Execption while checking for violations',
                     'details': str(e)})
             continue
 
         if not enforce_policy:
-            logger({'log_id': log_id,
+            logger.debug({'log_id': log_id,
                     'message': 'Enforcement is disabled, processing complete'})
             pubsub_message.ack()
             continue
 
         if enforcement_delay:
-            logger({'log_id': log_id,
+            logger.debug({'log_id': log_id,
                     'message': 'Delaying enforcement by %d seconds' % enforcement_delay})
             time.sleep(enforcement_delay)
 
         try:
             for (engine, violation) in v:
-                logger({'log_id': log_id, 'message': 'Executing remediation'})
+                logger.debug({'log_id': log_id, 'message': 'Executing remediation'})
 
                 engine.remediate(resource, violation)
                 log['remediation_count'] += 1
