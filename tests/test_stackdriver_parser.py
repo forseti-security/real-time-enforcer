@@ -16,7 +16,7 @@
 import json
 import os
 
-from stackdriver import StackdriverParser
+from app.lib.stackdriver import StackdriverParser
 
 
 def get_test_data(filename):
@@ -34,8 +34,9 @@ def get_test_data(filename):
 def test_bq_ds_iam_policy_update():
     bqds = get_test_data('bq-ds-set-iam-policy.json')
 
-    asset_info = StackdriverParser.get_asset(bqds)
-    assert asset_info is not None
+    assets = StackdriverParser.get_assets(bqds)
+    assert len(assets) == 1
+    asset_info = assets[0]
 
     expected = {
         'resource_type': 'bigquery.datasets',
