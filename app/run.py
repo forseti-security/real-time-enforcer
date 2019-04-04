@@ -173,20 +173,24 @@ def callback(pubsub_message):
                     'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our configured delay is %d seconds' % (delay, message_age, enforcement_delay)})
             time.sleep(delay)
 
-        try:
-            for (engine, violation) in v:
-                logger.debug({'log_id': log_id, 'message': 'Executing remediation'})
+        for (engine, violation) in v:
+            logger.debug({'log_id': log_id, 'message': 'Executing remediation'})
 
+            try:
                 engine.remediate(resource, violation)
                 log['remediation_count'] += 1
 
-        except Exception as e:
-            # Catch any other exceptions so we can acknowledge the message.
-            # Otherwise they start to fill up the buffer of unacknowledged messages
-            logger({'log_id': log_id,
-                    'message': 'Exception while attempting remediation',
-                    'details': str(e)})
-            log['exception'] = str(e)
+            except Exception as e:
+                # Catch any other exceptions so we can acknowledge the message.
+                # Otherwise they start to fill up the buffer of unacknowledged messages
+                logger({'log_id': log_id,
+                        'message': 'Exception while attempting remediation of {}'.format(violation),
+                        'details': str(e)})
+
+                if 'exceptions' not in log:
+                    log['exceptions'] = []
+
+                log['exceptions'].append(str(e))
 
         logger(log)
 
