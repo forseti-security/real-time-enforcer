@@ -23,8 +23,8 @@ import google.auth
 from micromanager import MicroManager
 from micromanager.resources import Resource
 
-from stackdriver import StackdriverParser
-from logger import Logger
+from lib.stackdriver import StackdriverParser
+from lib.logger import Logger
 
 # Load configuration
 project_id = os.environ.get('PROJECT_ID')
