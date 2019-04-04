@@ -40,6 +40,15 @@ debug_logging = os.environ.get('DEBUG_LOGGING', '').lower() == 'true'
 # method
 app_creds, _ = google.auth.default()
 
+# Setup logging helper
+logger = Logger(
+    'forseti-policy-enforcer',
+    stackdriver_logging,
+    project_id,
+    app_creds,
+    debug_logging
+)
+
 # Instantiate our micromanager
 mmconfig = {
     'policy_engines': [
@@ -52,13 +61,12 @@ mmconfig = {
 
 mm = MicroManager(mmconfig)
 
-logger = Logger('forseti-policy-enforcer', stackdriver_logging, project_id, app_creds, debug_logging)
-
 running_config = {
     'configured_policies': mm.get_configured_policies(),
     'policy_enforcement': "enabled" if enforce_policy else "disabled",
     'stackdriver_logging': "enabled" if stackdriver_logging else "disabled",
-    'enforcement_delay': enforcement_delay
+    'enforcement_delay': enforcement_delay,
+    'debug_logging': "enabled" if debug_logging else "disabled"
 }
 logger(running_config)
 
