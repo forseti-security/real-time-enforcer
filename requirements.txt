@@ -1,3 +1,4 @@
+python-dateutil
 micromanager
 jmespath
 google-cloud-pubsub

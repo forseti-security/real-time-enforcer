@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import dateutil.parser
 import json
 import os
 import time
@@ -68,6 +68,15 @@ def callback(pubsub_message):
     try:
         log_message = json.loads(pubsub_message.data)
         log_id = log_message.get('insertId', 'unknown-id')
+
+        # Get the timestamp from the log message
+        log_time_str = log_message.get('timestamp')
+        if log_time_str:
+            log_timestamp = int(dateutil.parser.parse(log_time_str).timestamp())
+        else:
+            log_timestamp = int(time.time())
+
+        log_received = int(time.time())
     except (json.JSONDecodeError, AttributeError):
         # We can't parse the log message, nothing to do here
         logger.debug('Failure loading json, discarding message')
@@ -157,9 +166,12 @@ def callback(pubsub_message):
             continue
 
         if enforcement_delay:
+            # If the log is old, subtract that from the enforcement delay
+            message_age = log_received - log_timestamp
+            delay = max(0, enforcement_delay - message_age)
             logger.debug({'log_id': log_id,
-                    'message': 'Delaying enforcement by %d seconds' % enforcement_delay})
-            time.sleep(enforcement_delay)
+                    'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our configured delay is %d seconds' % (delay, message_age, enforcement_delay)})
+            time.sleep(delay)
 
         try:
             for (engine, violation) in v:
