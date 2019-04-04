@@ -76,7 +76,6 @@ def callback(pubsub_message):
         else:
             log_timestamp = int(time.time())
 
-        log_received = int(time.time())
     except (json.JSONDecodeError, AttributeError):
         # We can't parse the log message, nothing to do here
         logger.debug('Failure loading json, discarding message')
@@ -167,7 +166,8 @@ def callback(pubsub_message):
 
         if enforcement_delay:
             # If the log is old, subtract that from the enforcement delay
-            message_age = log_received - log_timestamp
+            message_age = int(time.time()) - log_timestamp
+            log['message_age'] = message_age
             delay = max(0, enforcement_delay - message_age)
             logger.debug({'log_id': log_id,
                     'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our configured delay is %d seconds' % (delay, message_age, enforcement_delay)})
