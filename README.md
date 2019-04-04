@@ -1,6 +1,6 @@
-# Forseti Policy Enforcer
+# Forseti Real-Time Enforcer
 
-The Forseti Policy Enforcer uses a Stackdriver log export (to a Pub/Sub topic) to trigger policy evaluation and enforcement
+The Forseti Real-Time Enforcer uses a Stackdriver log export (to a Pub/Sub topic) to trigger policy evaluation and enforcement
 
 [![Build Status](https://api.travis-ci.org/cleardataeng/forseti-policy-enforcer.svg?branch=master)](https://travis-ci.org/cleardataeng/forseti-policy-enforcer)
 
