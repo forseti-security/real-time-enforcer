@@ -2,6 +2,8 @@
 
 The Forseti Policy Enforcer uses a Stackdriver log export (to a Pub/Sub topic) to trigger policy evaluation and enforcement
 
+[![Build Status](https://api.travis-ci.org/cleardataeng/forseti-policy-enforcer.svg?branch=master)](https://travis-ci.org/cleardataeng/forseti-policy-enforcer)
+
 This document will walk you through setting up a Stackdriver Log Export for your entire organization, filtering for AuditLog entries that create or update resources, and sending those log entries to a Pub/Sub topic. We will subscribe to that topic and evaluate each incoming log message and attempt to map it to a resource that [micromanager](https://github.com/cleardataeng/micromanager) recognizes. If so, we'll evaluate it with micromanager against an [Open Policy Agent](https://www.openpolicyagent.org/) instance.
 
 If you prefer to operate on a specific folder or project, the log export commands in this document should be altered appropriately.
