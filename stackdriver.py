@@ -27,7 +27,7 @@ class StackdriverParser():
         return message_type == audit_log_type
 
     @classmethod
-    def get_asset(cls, log_message):
+    def get_assets(cls, log_message):
         ''' Takes a decoded stackdriver AuditLog message and returns information
         about the asset(s) it references. We attempt to return None if we don't
         recognize the asset type '''
@@ -68,10 +68,22 @@ class StackdriverParser():
     @classmethod
     def _extract_asset_info(cls, res_type, message):
 
+        resources = []
+
         # just shortening the many calls to jmespath throughout this function
         # this sub-function saves us from passing the message each time
         def prop(exp):
             return jmespath.search(exp, message)
+
+        def add_resource():
+            resources.append({
+                'resource_type': resource_type,
+                'resource_name': resource_name,
+                'resource_location': resource_location,
+                'project_id': project_id,
+                'method_name': method_name,
+                'operation_type': operation_type
+            })
 
         method_name = prop('protoPayload.methodName')
         operation_type = cls._operation_type(res_type, method_name)
@@ -81,18 +93,26 @@ class StackdriverParser():
             resource_name = prop('resource.labels.database_id').split(':')[-1]
             resource_location = prop('resource.labels.region')
             project_id = prop('resource.labels.project_id')
+            add_resource()
 
         elif res_type == "gcs_bucket" and method_name.startswith('storage.buckets'):
             resource_type = 'storage.buckets'
             resource_name = prop("resource.labels.bucket_name")
             resource_location = prop("resource.labels.location")
             project_id = prop("resource.labels.project_id")
+            add_resource()
+
+            # If ACLs are updated, they are scanned by the IAM scanner, but
+            # they come through as a bucket update, we need to return both resource types
+            resource_type = 'storage.buckets.iam'
+            add_resource()
 
         elif res_type == "gcs_bucket" and method_name == 'storage.setIamPermissions':
             resource_type = 'storage.buckets.iam'
             resource_name = prop("resource.labels.bucket_name")
             resource_location = prop("resource.labels.location")
             project_id = prop("resource.labels.project_id")
+            add_resource()
 
         elif res_type == "bigquery_dataset":
             if "DatasetService" in method_name or 'SetIamPolicy' in method_name:
@@ -100,20 +120,13 @@ class StackdriverParser():
                 resource_name = prop("resource.labels.dataset_id")
                 resource_location = ''
                 project_id = prop("resource.labels.project_id")
+                add_resource()
 
         elif res_type == "project" and method_name == 'SetIamPolicy':
             resource_type = 'cloudresourcemanager.projects.iam'
             resource_name = prop("resource.labels.project_id")
             resource_location = ''
             project_id = prop("resource.labels.project_id")
-        else:
-            return None
+            add_resource()
 
-        return {
-            'resource_type': resource_type,
-            'resource_name': resource_name,
-            'resource_location': resource_location,
-            'project_id': project_id,
-            'method_name': method_name,
-            'operation_type': operation_type
-        }
+        return resources

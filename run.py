@@ -63,11 +63,10 @@ logger(running_config)
 
 
 def callback(pubsub_message):
-    log = {}
 
     try:
         log_message = json.loads(pubsub_message.data)
-        log_id = log['log_id'] = log_message.get('insertId', 'unknown-id')
+        log_id = log_message.get('insertId', 'unknown-id')
     except (json.JSONDecodeError, AttributeError):
         # We can't parse the log message, nothing to do here
         logger('Failure loading json, discarding message')
@@ -88,84 +87,97 @@ def callback(pubsub_message):
         pubsub_message.ack()
         return
 
+    # Attempt to get a list of asset(s) affected by this event
     try:
-        asset_info = StackdriverParser.get_asset(log_message)
+        assets = StackdriverParser.get_assets(log_message)
+
+        if len(assets) == 0:
+            # We did not recognize any assets in this message
+            logger({
+                'log_id': log_id,
+                'message': 'No recognized assets in log'
+            })
+
+            pubsub_message.ack()
+            return
+
     except Exception as e:
         # If we fail to get asset info from the message, the message must be
         # bad
-        logger({'log_id': log_id,
-                'message': 'Exception while parsing message for asset details',
-                'details': str(e)})
+        logger({
+            'log_id': log_id,
+            'message': 'Exception while parsing message for asset details',
+            'details': str(e)
+        })
+
         pubsub_message.ack()
         return
 
-    log['asset_info'] = asset_info
+    for asset_info in assets:
 
-    if asset_info is None:
-        # We did not recognize any assets in this message
+        # Start building our log message
+        log = {}
+        log['log_id'] = log_id
+        log['asset_info'] = asset_info
+
+        if asset_info.get('operation_type') != 'write':
+            # No changes, no need to check anything
+            logger({'log_id': log_id,
+                    'message': 'Message is not a create/update, nothing to do'})
+            pubsub_message.ack()
+            continue
+
+        try:
+            resource = Resource.factory('gcp', asset_info, credentials=app_creds)
+        except Exception as e:
+            logger({'log_id': log_id,
+                    'message': 'Internal failure in micromanager',
+                    'details': str(e)})
+            pubsub_message.ack()
+            continue
+
         logger({'log_id': log_id,
-                'message': 'No recognizable asset info, discarding message'})
-        pubsub_message.ack()
-        return
+                'message': 'Analyzing for violations'})
 
-    if asset_info.get('operation_type') != 'write':
-        # No changes, no need to check anything
-        logger({'log_id': log_id,
-                'message': 'Message is not a create/update, nothing to do'})
-        pubsub_message.ack()
-        return
+        try:
+            v = mm.violations(resource)
+            log['violation_count'] = len(v)
+            log['remediation_count'] = 0
+        except Exception as e:
+            logger({'log_id': log_id,
+                    'message': 'Execption while checking for violations',
+                    'details': str(e)})
+            continue
 
-    try:
-        resource = Resource.factory('gcp', asset_info, credentials=app_creds)
-    except Exception as e:
-        logger({'log_id': log_id,
-                'message': 'Internal failure in micromanager',
-                'details': str(e)})
-        pubsub_message.ack()
-        return
+        if not enforce_policy:
+            logger({'log_id': log_id,
+                    'message': 'Enforcement is disabled, processing complete'})
+            pubsub_message.ack()
+            continue
 
-    logger({'log_id': log_id,
-            'message': 'Analyzing for violations'})
-    try:
-        v = mm.violations(resource)
-        log['violation_count'] = len(v)
-        log['remediation_count'] = 0
-    except Exception as e:
-        logger({'log_id': log_id,
-                'message': 'Execption while checking for violations',
-                'details': str(e)})
+        if enforcement_delay:
+            logger({'log_id': log_id,
+                    'message': 'Delaying enforcement by %d seconds' % enforcement_delay})
+            time.sleep(enforcement_delay)
 
-    if not enforce_policy:
-        logger({'log_id': log_id,
-                'message': 'Enforcement is disabled, processing complete'})
-        pubsub_message.ack()
-        return
+        try:
+            for (engine, violation) in v:
+                logger({'log_id': log_id, 'message': 'Executing remediation'})
 
-    if enforcement_delay:
-        logger({'log_id': log_id,
-                'message': 'Delaying enforcement by %d seconds' % enforcement_delay})
-        time.sleep(enforcement_delay)
+                engine.remediate(resource, violation)
+                log['remediation_count'] += 1
 
-    try:
-        for (engine, violation) in v:
-            logger({'log_id': log_id, 'message': 'Executing remediation'})
+        except Exception as e:
+            # Catch any other exceptions so we can acknowledge the message.
+            # Otherwise they start to fill up the buffer of unacknowledged messages
+            logger({'log_id': log_id,
+                    'message': 'Exception while attempting remediation',
+                    'details': str(e)})
+            log['exception'] = str(e)
 
-            engine.remediate(resource, violation)
-            log['remediation_count'] += 1
+        logger(log)
 
-    except Exception as e:
-        # Catch any other exceptions so we can acknowledge the message.
-        # Otherwise they start to fill up the buffer of unacknowledged messages
-        logger({'log_id': log_id,
-                'message': 'Exception while attempting remediation',
-                'details': str(e)})
-        log['exception'] = str(e)
-        pubsub_message.ack()
-
-        # Now allow the thread to raise the exception
-        raise e
-
-    logger(log)
+    # Finally ack the message after we're done with all of the assets
     pubsub_message.ack()
 
 
