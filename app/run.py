@@ -20,8 +20,8 @@ import time
 from google.cloud import pubsub
 import google.auth
 
-from micromanager import MicroManager
-from micromanager.resources import Resource
+from rpe import RPE
+from rpe.resources import Resource
 
 from lib.stackdriver import StackdriverParser
 from lib.logger import Logger
@@ -49,8 +49,8 @@ logger = Logger(
     debug_logging
 )
 
-# Instantiate our micromanager
-mmconfig = {
+# Instantiate our rpe
+rpeconfig = {
     'policy_engines': [
         {
             'type': 'opa',
@@ -59,10 +59,10 @@ mmconfig = {
     ]
 }
 
-mm = MicroManager(mmconfig)
+rpe = RPE(rpeconfig)
 
 running_config = {
-    'configured_policies': mm.get_configured_policies(),
+    'configured_policies': rpe.get_configured_policies(),
     'policy_enforcement': "enabled" if enforce_policy else "disabled",
     'stackdriver_logging': "enabled" if stackdriver_logging else "disabled",
     'enforcement_delay': enforcement_delay,
@@ -148,7 +148,7 @@ def callback(pubsub_message):
             resource = Resource.factory('gcp', asset_info, credentials=app_creds)
         except Exception as e:
             logger.debug({'log_id': log_id,
-                    'message': 'Internal failure in micromanager',
+                    'message': 'Internal failure in rpe-lib',
                     'details': str(e)})
             pubsub_message.ack()
             continue
@@ -157,7 +157,7 @@ def callback(pubsub_message):
                 'message': 'Analyzing for violations'})
 
         try:
-            v = mm.violations(resource)
+            v = rpe.violations(resource)
             log['violation_count'] = len(v)
             log['remediation_count'] = 0
         except Exception as e:

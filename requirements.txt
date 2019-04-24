@@ -1,5 +1,5 @@
 python-dateutil
-micromanager
+rpe-lib
 jmespath
 google-cloud-pubsub
 google-cloud-logging
