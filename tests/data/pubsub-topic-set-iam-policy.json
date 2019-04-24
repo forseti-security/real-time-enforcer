@@ -1,0 +1,67 @@
+{
+  "insertId": "x0yt3bc1ma",
+  "logName": "projects/fake-project/logs/cloudaudit.googleapis.com%2Factivity",
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "authenticationInfo": {
+      "principalEmail": "some.user@example.com"
+    },
+    "authorizationInfo": [
+      {
+        "granted": true,
+        "permission": "pubsub.topics.setIamPolicy",
+        "resource": "projects/fake-project/topics/test-topic",
+        "resourceAttributes": {}
+      }
+    ],
+    "methodName": "google.iam.v1.IAMPolicy.SetIamPolicy",
+    "request": {
+      "@type": "type.googleapis.com/google.iam.v1.SetIamPolicyRequest",
+      "policy": {
+        "bindings": [
+          {
+            "members": [
+              "allUsers"
+            ],
+            "role": "roles/pubsub.viewer"
+          }
+        ],
+        "etag": "ACAB"
+      },
+      "resource": "projects/fake-project/topics/test-topic"
+    },
+    "requestMetadata": {
+      "callerIp": "203.0.113.42",
+      "callerSuppliedUserAgent": "x",
+      "destinationAttributes": {},
+      "requestAttributes": {
+        "auth": {},
+        "time": "2019-04-23T17:42:58.838042417Z"
+      }
+    },
+    "resourceName": "projects/fake-project/topics/test-topic",
+    "response": {
+      "@type": "type.googleapis.com/google.iam.v1.Policy",
+      "bindings": [
+        {
+          "members": [
+            "allUsers"
+          ],
+          "role": "roles/pubsub.viewer"
+        }
+      ],
+      "etag": "BwWHNh2py/k="
+    },
+    "serviceName": "pubsub.googleapis.com"
+  },
+  "receiveTimestamp": "2019-04-23T17:42:59.421688776Z",
+  "resource": {
+    "labels": {
+      "project_id": "fake-project",
+      "topic_id": "projects/fake-project/topics/test-topic"
+    },
+    "type": "pubsub_topic"
+  },
+  "severity": "NOTICE",
+  "timestamp": "2019-04-23T17:42:58.817353433Z"
+}

@@ -15,6 +15,7 @@
 
 import json
 import os
+import pytest
 
 from app.lib.stackdriver import StackdriverParser
 
@@ -30,20 +31,25 @@ def get_test_data(filename):
     with open(p) as f:
         return json.load(f)
 
+# parameters for testing logs that should return a single asset
+test_single_asset_log_params = [
+    # filename, expected_resource_type, expected_operation_type, expected_resource_name
+    ("bq-ds-set-iam-policy.json", "bigquery.datasets", "write", "wooo"),
+    ("pubsub-subscription-set-iam-policy.json", "pubsub.projects.subscriptions.iam", "write", "test-subscription"),
+    ("pubsub-topic-set-iam-policy.json", "pubsub.projects.topics.iam", "write", "test-topic"),
+]
 
-def test_bq_ds_iam_policy_update():
-    bqds = get_test_data('bq-ds-set-iam-policy.json')
+@pytest.mark.parametrize(
+    "filename,expected_resource_type,expected_operation_type,expected_resource_name",
+    test_single_asset_log_params
+)
+def test_single_asset_log_messages(filename, expected_resource_type, expected_operation_type, expected_resource_name):
+    log_message = get_test_data(filename)
 
-    assets = StackdriverParser.get_assets(bqds)
+    assets = StackdriverParser.get_assets(log_message)
     assert len(assets) == 1
     asset_info = assets[0]
 
-    expected = {
-        'resource_type': 'bigquery.datasets',
-        'resource_name': 'wooo',
-        'resource_location': '',
-        'project_id': 'fake-project',
-        'method_name': 'google.iam.v1.IAMPolicy.SetIamPolicy',
-        'operation_type': 'write',
-    }
-    assert asset_info == expected
+    assert asset_info['resource_type'] == expected_resource_type
+    assert asset_info['operation_type'] == expected_operation_type
+    assert asset_info['resource_name'] == expected_resource_name

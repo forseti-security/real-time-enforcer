@@ -64,7 +64,6 @@ class StackdriverParser():
             return 'unknown'
 
 
-
     @classmethod
     def _extract_asset_info(cls, res_type, message):
 
@@ -127,6 +126,20 @@ class StackdriverParser():
             resource_name = prop("resource.labels.project_id")
             resource_location = ''
             project_id = prop("resource.labels.project_id")
+            add_resource()
+
+        elif res_type == "pubsub_subscription" and 'SetIamPolicy' in method_name:
+            resource_type = 'pubsub.projects.subscriptions.iam'
+            resource_name = prop("resource.labels.subscription_id").split('/')[-1]
+            project_id = prop("resource.labels.project_id")
+            resource_location = ''
+            add_resource()
+
+        elif res_type == "pubsub_topic" and 'SetIamPolicy' in method_name:
+            resource_type = 'pubsub.projects.topics.iam'
+            resource_name = prop("resource.labels.topic_id").split('/')[-1]
+            project_id = prop("resource.labels.project_id")
+            resource_location = ''
             add_resource()
 
         return resources

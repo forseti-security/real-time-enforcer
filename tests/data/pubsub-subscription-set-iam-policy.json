@@ -1,0 +1,65 @@
+{
+  "insertId": "1q5m3sjd1qfd",
+  "logName": "projects/fake-project/logs/cloudaudit.googleapis.com%2Factivity",
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "authenticationInfo": {
+      "principalEmail": "joe.ceresini@cleardata.com"
+    },
+    "authorizationInfo": [
+      {
+        "granted": true,
+        "permission": "pubsub.subscriptions.setIamPolicy",
+        "resource": "projects/fake-project/subscriptions/test-subscription",
+        "resourceAttributes": {}
+      }
+    ],
+    "methodName": "google.iam.v1.IAMPolicy.SetIamPolicy",
+    "request": {
+      "@type": "type.googleapis.com/google.iam.v1.SetIamPolicyRequest",
+      "policy": {
+        "bindings": [
+          {
+            "members": [
+              "user:joe.ceresini@admin.cleardata.com"
+            ],
+            "role": "roles/viewer"
+          }
+        ],
+        "etag": "BwWHN0DS61A="
+      },
+      "resource": "projects/fake-project/subscriptions/test-subscription"
+    },
+    "requestMetadata": {
+      "callerIp": "203.0.113.126",
+      "callerSuppliedUserAgent": "x",
+      "destinationAttributes": {},
+      "requestAttributes": {
+        "auth": {},
+        "time": "2019-04-23T19:04:26.016573368Z"
+      }
+    },
+    "resourceName": "projects/fake-project/subscriptions/test-subscription",
+    "response": {
+      "@type": "type.googleapis.com/google.iam.v1.Policy",
+      "bindings": [
+        {
+          "members": [
+            "user:some.user@example.com"
+          ],
+          "role": "roles/viewer"
+        }
+      ],
+      "etag": "BwWHN0D3BPE="
+    },
+    "serviceName": "pubsub.googleapis.com"
+  },
+  "receiveTimestamp": "2019-04-23T19:04:26.998833327Z",
+  "resource": {
+    "labels": {
+      "project_id": "fake-project",
+      "subscription_id": "projects/fake-project/subscriptions/test-subscription"
+    },
+    "type": "pubsub_subscription"
+  }
+}
