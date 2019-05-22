@@ -18,13 +18,13 @@ import os
 import time
 
 from google.cloud import pubsub
-import google.auth
 
 from rpe import RPE
 from rpe.resources import Resource
 
 from lib.stackdriver import StackdriverParser
 from lib.logger import Logger
+from lib.credentials import CredentialsBroker
 
 # Load configuration
 project_id = os.environ.get('PROJECT_ID')
@@ -38,7 +38,8 @@ debug_logging = os.environ.get('DEBUG_LOGGING', '').lower() == 'true'
 # We're using the application default credentials, but defining them
 # explicitly so its easy to plug-in credentials using your own preferred
 # method
-app_creds, _ = google.auth.default()
+cb = CredentialsBroker()
+app_creds = cb.get_credentials()
 
 # Setup logging helper
 logger = Logger(
@@ -145,7 +146,8 @@ def callback(pubsub_message):
             continue
 
         try:
-            resource = Resource.factory('gcp', asset_info, credentials=app_creds)
+            project_creds = cb.get_credentials(project_id=asset_info['project_id'])
+            resource = Resource.factory('gcp', asset_info, credentials=project_creds)
         except Exception as e:
             logger.debug({'log_id': log_id,
                     'message': 'Internal failure in rpe-lib',
