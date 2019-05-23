@@ -18,31 +18,34 @@ import os
 import time
 
 from google.cloud import pubsub
-import google.auth
 
 from rpe import RPE
 from rpe.resources import Resource
 
 from lib.stackdriver import StackdriverParser
 from lib.logger import Logger
+from lib.credentials import CredentialsBroker
 
 # Load configuration
+app_name = os.environ.get('APP_NAME', 'forseti-realtime-enforcer')
 project_id = os.environ.get('PROJECT_ID')
 subscription_name = os.environ.get('SUBSCRIPTION_NAME')
 opa_url = os.environ.get('OPA_URL')
 enforce_policy = os.environ.get('ENFORCE', '').lower() == 'true'
 enforcement_delay = int(os.environ.get('ENFORCEMENT_DELAY', 0))
 stackdriver_logging = os.environ.get('STACKDRIVER_LOGGING', '').lower() == 'true'
+per_project_logging = os.environ.get('PER_PROJECT_LOGGING', '').lower() == 'true'
 debug_logging = os.environ.get('DEBUG_LOGGING', '').lower() == 'true'
 
 # We're using the application default credentials, but defining them
 # explicitly so its easy to plug-in credentials using your own preferred
 # method
-app_creds, _ = google.auth.default()
+cb = CredentialsBroker()
+app_creds = cb.get_credentials()
 
 # Setup logging helper
 logger = Logger(
-    'forseti-policy-enforcer',
+    app_name,
     stackdriver_logging,
     project_id,
     app_creds,
@@ -139,36 +142,54 @@ def callback(pubsub_message):
 
         if asset_info.get('operation_type') != 'write':
             # No changes, no need to check anything
-            logger.debug({'log_id': log_id,
-                    'message': 'Message is not a create/update, nothing to do'})
+            logger.debug({
+                'log_id': log_id,
+                'message': 'Message is not a create/update, nothing to do'}
+            )
             pubsub_message.ack()
             continue
 
         try:
-            resource = Resource.factory('gcp', asset_info, credentials=app_creds)
+            project_creds = cb.get_credentials(project_id=asset_info['project_id'])
+            if per_project_logging:
+                project_logger = Logger(
+                    app_name,
+                    True,  # per-project logging is always stackdriver
+                    asset_info['project_id'],
+                    project_creds
+                )
+            resource = Resource.factory('gcp', asset_info, credentials=project_creds)
         except Exception as e:
-            logger.debug({'log_id': log_id,
-                    'message': 'Internal failure in rpe-lib',
-                    'details': str(e)})
+            logger.debug({
+                'log_id': log_id,
+                'message': 'Internal failure in rpe-lib',
+                'details': str(e)
+            })
             pubsub_message.ack()
             continue
 
-        logger.debug({'log_id': log_id,
-                'message': 'Analyzing for violations'})
+        logger.debug({
+            'log_id': log_id,
+            'message': 'Analyzing for violations'
+        })
 
         try:
             v = rpe.violations(resource)
             log['violation_count'] = len(v)
             log['remediation_count'] = 0
         except Exception as e:
-            logger.debug({'log_id': log_id,
-                    'message': 'Execption while checking for violations',
-                    'details': str(e)})
+            logger.debug({
+                'log_id': log_id,
+                'message': 'Execption while checking for violations',
+                'details': str(e)
+            })
             continue
 
         if not enforce_policy:
-            logger.debug({'log_id': log_id,
-                    'message': 'Enforcement is disabled, processing complete'})
+            logger.debug({
+                'log_id': log_id,
+                'message': 'Enforcement is disabled, processing complete'
+            })
             pubsub_message.ack()
             continue
 
@@ -177,8 +198,10 @@ def callback(pubsub_message):
             message_age = int(time.time()) - log_timestamp
             log['message_age'] = message_age
             delay = max(0, enforcement_delay - message_age)
-            logger.debug({'log_id': log_id,
-                    'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our configured delay is %d seconds' % (delay, message_age, enforcement_delay)})
+            logger.debug({
+                'log_id': log_id,
+                'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our configured delay is %d seconds' % (delay, message_age, enforcement_delay)
+            })
             time.sleep(delay)
 
         for (engine, violation) in v:
@@ -187,6 +210,14 @@ def callback(pubsub_message):
             try:
                 engine.remediate(resource, violation)
                 log['remediation_count'] += 1
+
+                if per_project_logging:
+                    project_log = {
+                        'action': 'remediation',
+                        'trigger_event': asset_info,
+                        'policy': str(violation)
+                    }
+                    project_logger(project_log)
 
             except Exception as e:
                 # Catch any other exceptions so we can acknowledge the message.

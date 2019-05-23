@@ -18,7 +18,6 @@ import google.cloud.logging
 
 class Logger:
 
-
     ''' Log to console or stackdriver '''
 
     def __init__(self, log_name, stackdriver=False, project_id=None, credentials=None, debugging=False):
@@ -29,7 +28,6 @@ class Logger:
         if stackdriver:
             client = google.cloud.logging.Client(project=project_id, credentials=credentials)
             self.sd_logger = client.logger(log_name)
-
 
     def __call__(self, data):
         if self.stackdriver:
