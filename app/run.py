@@ -33,6 +33,7 @@ opa_url = os.environ.get('OPA_URL')
 enforce_policy = os.environ.get('ENFORCE', '').lower() == 'true'
 enforcement_delay = int(os.environ.get('ENFORCEMENT_DELAY', 0))
 stackdriver_logging = os.environ.get('STACKDRIVER_LOGGING', '').lower() == 'true'
+per_project_logging = os.environ.get('PER_PROJECT_LOGGING', '').lower() == 'true'
 debug_logging = os.environ.get('DEBUG_LOGGING', '').lower() == 'true'
 
 # We're using the application default credentials, but defining them
@@ -147,6 +148,13 @@ def callback(pubsub_message):
 
         try:
             project_creds = cb.get_credentials(project_id=asset_info['project_id'])
+            if per_project_logging:
+                project_logger = Logger(
+                    'forseti-policy-enforcer',
+                    True,  # per-project logging is always stackdriver
+                    asset_info['project_id'],
+                    project_creds
+                )
             resource = Resource.factory('gcp', asset_info, credentials=project_creds)
         except Exception as e:
             logger.debug({'log_id': log_id,
@@ -189,6 +197,14 @@ def callback(pubsub_message):
             try:
                 engine.remediate(resource, violation)
                 log['remediation_count'] += 1
+
+                if per_project_logging:
+                    project_log = {
+                        'action': 'remediation',
+                        'trigger_event': asset_info,
+                        'policy': str(violation)
+                    }
+                    project_logger(project_log)
 
             except Exception as e:
                 # Catch any other exceptions so we can acknowledge the message.
