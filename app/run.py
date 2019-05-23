@@ -27,6 +27,7 @@ from lib.logger import Logger
 from lib.credentials import CredentialsBroker
 
 # Load configuration
+app_name = os.environ.get('APP_NAME', 'forseti-realtime-enforcer')
 project_id = os.environ.get('PROJECT_ID')
 subscription_name = os.environ.get('SUBSCRIPTION_NAME')
 opa_url = os.environ.get('OPA_URL')
@@ -44,7 +45,7 @@ app_creds = cb.get_credentials()
 
 # Setup logging helper
 logger = Logger(
-    'forseti-policy-enforcer',
+    app_name,
     stackdriver_logging,
     project_id,
     app_creds,
@@ -150,7 +151,7 @@ def callback(pubsub_message):
             project_creds = cb.get_credentials(project_id=asset_info['project_id'])
             if per_project_logging:
                 project_logger = Logger(
-                    'forseti-policy-enforcer',
+                    app_name,
                     True,  # per-project logging is always stackdriver
                     asset_info['project_id'],
                     project_creds
