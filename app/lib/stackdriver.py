@@ -50,19 +50,18 @@ class StackdriverParser():
         list is going to be annoying. Long term, this entire class  should be
         replaced when google provides a real-time event delivery solution '''
 
-        l = method_name.split('.')[-1]
-        if l in ['list', 'get', 'List']:
+        last = method_name.split('.')[-1]
+        if last in ['list', 'get', 'List']:
             return 'read'
 
-        if l in ['create', 'update', 'InsertDataset', 'PatchDataset', 'setIamPermissions', 'SetIamPolicy']:
+        if last in ['create', 'update', 'InsertDataset', 'PatchDataset', 'setIamPermissions', 'SetIamPolicy']:
             return 'write'
 
-        if l in ['delete']:
+        if last in ['delete']:
             return 'delete'
 
         else:
             return 'unknown'
-
 
     @classmethod
     def _extract_asset_info(cls, res_type, message):

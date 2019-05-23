@@ -142,8 +142,10 @@ def callback(pubsub_message):
 
         if asset_info.get('operation_type') != 'write':
             # No changes, no need to check anything
-            logger.debug({'log_id': log_id,
-                    'message': 'Message is not a create/update, nothing to do'})
+            logger.debug({
+                'log_id': log_id,
+                'message': 'Message is not a create/update, nothing to do'}
+            )
             pubsub_message.ack()
             continue
 
@@ -158,28 +160,36 @@ def callback(pubsub_message):
                 )
             resource = Resource.factory('gcp', asset_info, credentials=project_creds)
         except Exception as e:
-            logger.debug({'log_id': log_id,
-                    'message': 'Internal failure in rpe-lib',
-                    'details': str(e)})
+            logger.debug({
+                'log_id': log_id,
+                'message': 'Internal failure in rpe-lib',
+                'details': str(e)
+            })
             pubsub_message.ack()
             continue
 
-        logger.debug({'log_id': log_id,
-                'message': 'Analyzing for violations'})
+        logger.debug({
+            'log_id': log_id,
+            'message': 'Analyzing for violations'
+        })
 
         try:
             v = rpe.violations(resource)
             log['violation_count'] = len(v)
             log['remediation_count'] = 0
         except Exception as e:
-            logger.debug({'log_id': log_id,
-                    'message': 'Execption while checking for violations',
-                    'details': str(e)})
+            logger.debug({
+                'log_id': log_id,
+                'message': 'Execption while checking for violations',
+                'details': str(e)
+            })
             continue
 
         if not enforce_policy:
-            logger.debug({'log_id': log_id,
-                    'message': 'Enforcement is disabled, processing complete'})
+            logger.debug({
+                'log_id': log_id,
+                'message': 'Enforcement is disabled, processing complete'
+            })
             pubsub_message.ack()
             continue
 
@@ -188,8 +198,10 @@ def callback(pubsub_message):
             message_age = int(time.time()) - log_timestamp
             log['message_age'] = message_age
             delay = max(0, enforcement_delay - message_age)
-            logger.debug({'log_id': log_id,
-                    'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our configured delay is %d seconds' % (delay, message_age, enforcement_delay)})
+            logger.debug({
+                'log_id': log_id,
+                'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our configured delay is %d seconds' % (delay, message_age, enforcement_delay)
+            })
             time.sleep(delay)
 
         for (engine, violation) in v:
