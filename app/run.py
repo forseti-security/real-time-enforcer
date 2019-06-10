@@ -213,7 +213,7 @@ def callback(pubsub_message):
 
                 if per_project_logging:
                     project_log = {
-                        'action': 'remediation',
+                        'event': 'remediation',
                         'trigger_event': asset_info,
                         'policy': str(violation)
                     }
