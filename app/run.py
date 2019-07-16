@@ -16,6 +16,7 @@ import dateutil.parser
 import json
 import os
 import time
+import traceback
 
 from google.cloud import pubsub
 
@@ -160,11 +161,10 @@ def callback(pubsub_message):
                 )
             resource = Resource.factory('gcp', asset_info, credentials=project_creds)
         except Exception as e:
-            logger.debug({
-                'log_id': log_id,
-                'message': 'Internal failure in rpe-lib',
-                'details': str(e)
-            })
+            log['message'] = 'Internal failure in rpe-lib'
+            log['details'] = str(e)
+            log['trace'] = traceback.format_exc()
+            logger(log)
             pubsub_message.ack()
             continue
 
@@ -174,15 +174,15 @@ def callback(pubsub_message):
         })
 
         try:
-            v = rpe.violations(resource)
-            log['violation_count'] = len(v)
+            violations = rpe.violations(resource)
+            log['violation_count'] = len(violations)
             log['remediation_count'] = 0
+            log['violations'] = {str(v): {'remediated': False} for _, v in violations}
         except Exception as e:
-            logger.debug({
-                'log_id': log_id,
-                'message': 'Execption while checking for violations',
-                'details': str(e)
-            })
+            log['message'] = 'Execption while checking for violations'
+            log['details'] = str(e)
+            log['trace'] = traceback.format_exc()
+            logger(log)
             continue
 
         if not enforce_policy:
@@ -204,11 +204,13 @@ def callback(pubsub_message):
             })
             time.sleep(delay)
 
-        for (engine, violation) in v:
+        for (engine, violation) in violations:
             logger.debug({'log_id': log_id, 'message': 'Executing remediation'})
 
             try:
+                remediation_log = log['violations'][str(violation)]
                 engine.remediate(resource, violation)
+                remediation_log['remediated'] = True
                 log['remediation_count'] += 1
 
                 if per_project_logging:
@@ -222,14 +224,10 @@ def callback(pubsub_message):
             except Exception as e:
                 # Catch any other exceptions so we can acknowledge the message.
                 # Otherwise they start to fill up the buffer of unacknowledged messages
-                logger({'log_id': log_id,
-                        'message': 'Exception while attempting remediation of {}'.format(violation),
-                        'details': str(e)})
-
-                if 'exceptions' not in log:
-                    log['exceptions'] = []
-
-                log['exceptions'].append(str(e))
+                remediation_log['message'] = 'Execption while checking for violations'
+                remediation_log['details'] = str(e)
+                remediation_log['trace'] = traceback.format_exc()
+                logger(log)
 
         logger(log)
 
