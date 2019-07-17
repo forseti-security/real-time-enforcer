@@ -37,6 +37,11 @@ test_single_asset_log_params = [
     ("bq-ds-set-iam-policy.json", "bigquery.datasets", "write", "wooo"),
     ("pubsub-subscription-set-iam-policy.json", "pubsub.projects.subscriptions.iam", "write", "test-subscription"),
     ("pubsub-topic-set-iam-policy.json", "pubsub.projects.topics.iam", "write", "test-topic"),
+
+    # CloudSQL logs are inconsistent. See https://issuetracker.google.com/issues/137629452
+    ("cloudsql-resource.labels.json", "sqladmin.instances", "write", "test-instance"),
+    ("cloudsql-protoPayload.request.body.json", "sqladmin.instances", "write", "test-instance"),
+    ("cloudsql-protoPayload.request.resource.instanceName.instanceId.json", "sqladmin.instances", "write", "test-instance"),
 ]
 
 @pytest.mark.parametrize(

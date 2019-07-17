@@ -1,0 +1,70 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "status": {},
+    "authenticationInfo": {
+      "principalEmail": "user@domain.com"
+    },
+    "requestMetadata": {
+      "callerIp": "000.0.000.0",
+      "requestAttributes": {
+        "time": "0000-00-00T00:00:00.000Z",
+        "auth": {}
+      },
+      "destinationAttributes": {}
+    },
+    "serviceName": "cloudsql.googleapis.com",
+    "methodName": "cloudsql.instances.create",
+    "authorizationInfo": [
+      {
+        "resource": "projects/my-project",
+        "permission": "cloudsql.instances.create",
+        "granted": true,
+        "resourceAttributes": {}
+      }
+    ],
+    "resourceName": "projects/my-project",
+    "request": {
+      "@type": "type.googleapis.com/google.cloud.sql.v0beta0.SqlInstancesInsertRequest",
+      "body": {
+        "settings": {
+          "tier": "db-n0-standard-0"
+        },
+        "name": "test-instance"
+      },
+      "project": "my-project"
+    },
+    "response": {
+      "name": "0000b000-0d0b-00b0-0000-c0bf00000000",
+      "targetId": "test-instance",
+      "@type": "type.googleapis.com/google.cloud.sql.v0beta0.SqlOperation",
+      "instanceUid": "0-ae00ea00-ba0b-000e-000a-e0f0000a0a00",
+      "insertTime": "0000-00-00T00:00:00.000Z",
+      "user": "user@domain.com",
+      "targetProject": "my-project",
+      "selfLink": "https://content.googleapis.com/sql/v0beta0/projects/my-project/operations/0000b000-0d0b-00b0-0000-c0bf00000000",
+      "targetLink": "https://content.googleapis.com/sql/v0beta0/projects/my-project/instances/test-instance",
+      "operationType": "CREATE",
+      "kind": "sql#operation",
+      "status": "PENDING"
+    }
+  },
+  "insertId": "-rqgf0kenyyg0",
+  "resource": {
+    "type": "cloudsql_database",
+    "labels": {
+      "project_id": "my-project",
+      "database_id": "",
+      "region": ""
+    }
+  },
+  "timestamp": "0000-00-00T00:00:00.000Z",
+  "severity": "NOTICE",
+  "logName": "projects/my-project/logs/cloudaudit.googleapis.com%0Factivity",
+  "operation": {
+    "id": "0000b000-0d0b-00b0-0000-c0bf00000000",
+    "producer": "cloudsql.googleapis.com",
+    "first": true
+  },
+  "receiveTimestamp": "0000-00-00T00:00:00.000000000Z"
+}
