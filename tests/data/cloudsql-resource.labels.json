@@ -1,0 +1,63 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "status": {},
+    "authenticationInfo": {
+      "principalEmail": "user@domain.com"
+    },
+    "requestMetadata": {
+      "callerIp": "00.00.000.000",
+      "requestAttributes": {
+        "time": "0000-00-00T00:00:00.000Z",
+        "auth": {}
+      },
+      "destinationAttributes": {}
+    },
+    "serviceName": "cloudsql.googleapis.com",
+    "methodName": "cloudsql.instances.create",
+    "authorizationInfo": [
+      {
+        "resource": "instances/my-project:test-instance",
+        "permission": "cloudsql.instances.create",
+        "granted": true,
+        "resourceAttributes": {}
+      }
+    ],
+    "resourceName": "instances/my-project:test-instance",
+    "response": {
+      "@type": "type.googleapis.com/cloudsql.admin.InstancesInsertResponse",
+      "operation": {
+        "insertTime": "0000000000000",
+        "operationName": {
+          "operationId": "000cc00c-0000-00f0-0e00-00c0c000ddf0",
+          "instanceName": {
+            "fullProjectId": "my-project",
+            "instanceId": "test-instance"
+          }
+        },
+        "state": "PENDING",
+        "operationType": "CREATE",
+        "userEmailAddress": "user@domain.com"
+      },
+      "operationId": "000cc00c-0000-00f0-0e00-00c0c000ddf0"
+    }
+  },
+  "insertId": "xxxxx",
+  "resource": {
+    "type": "cloudsql_database",
+    "labels": {
+      "project_id": "my-project",
+      "database_id": "my-project:test-instance",
+      "region": "us-central"
+    }
+  },
+  "timestamp": "0000-00-00T00:00:00.000Z",
+  "severity": "NOTICE",
+  "logName": "projects/my-project/logs/cloudaudit.googleapis.com%0Factivity",
+  "operation": {
+    "id": "-0000000000000000000",
+    "producer": "cloudsql.googleapis.com",
+    "last": true
+  },
+  "receiveTimestamp": "0000-00-00T00:00:00.000000000Z"
+}

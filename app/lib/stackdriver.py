@@ -88,7 +88,12 @@ class StackdriverParser():
 
         if res_type == 'cloudsql_database' and method_name.startswith('cloudsql.instances'):
             resource_type = 'sqladmin.instances'
-            resource_name = prop('resource.labels.database_id').split(':')[-1]
+
+            # CloudSQL logs are inconsistent. See https://issuetracker.google.com/issues/137629452
+            resource_name = (prop('resource.labels.database_id').split(':')[-1] or
+                            prop('protoPayload.request.body.name') or
+                            prop('protoPayload.request.resource.instanceName.instanceId'))
+
             resource_location = prop('resource.labels.region')
             project_id = prop('resource.labels.project_id')
             add_resource()

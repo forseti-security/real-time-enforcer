@@ -1,0 +1,78 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "authenticationInfo": {
+      "principalEmail": "user@domain.com"
+    },
+    "requestMetadata": {
+      "callerIp": "00.00.000.000",
+      "requestAttributes": {
+        "time": "0000-00-00T00:00:00.000Z",
+        "auth": {}
+      },
+      "destinationAttributes": {}
+    },
+    "serviceName": "cloudsql.googleapis.com",
+    "methodName": "cloudsql.instances.create",
+    "authorizationInfo": [
+      {
+        "resource": "instances/my-project:test-instance",
+        "permission": "cloudsql.instances.create",
+        "granted": true,
+        "resourceAttributes": {}
+      }
+    ],
+    "resourceName": "instances/my-project:test-instance",
+    "request": {
+      "clientIp": "00.00.000.000",
+      "resource": {
+        "instanceName": {
+          "fullProjectId": "my-project",
+          "instanceId": "test-instance"
+        },
+        "region": "us-central0",
+        "instanceType": "CLOUDSQL_INSTANCE",
+        "databaseVersion": "MYSQL_0_0",
+        "backendType": "SECOND_GEN",
+        "settings": {
+          "backupConfig": {
+            "binaryLogEnabled": true,
+            "enabled": true,
+            "specification": "every day 00:00"
+          },
+          "ipConfiguration": {
+            "enabled": true
+          },
+          "maintenanceWindow": {},
+          "storageAutoResize": true,
+          "pricingPlan": "PER_USAGE",
+          "storageAutoResizeLimit": "0",
+          "tier": "db-n0-standard-0",
+          "activationPolicy": "ALWAYS",
+          "locationPreference": {},
+          "dataDiskSizeGb": "00",
+          "dataDiskType": "PD_SSD"
+        }
+      },
+      "@type": "type.googleapis.com/cloudsql.admin.InstancesInsertRequest"
+    }
+  },
+  "insertId": "l00ll0eltq0g",
+  "resource": {
+    "type": "cloudsql_database",
+    "labels": {
+      "project_id": "my-project",
+      "database_id": "",
+      "region": "us-central"
+    }
+  },
+  "timestamp": "0000-00-00T00:00:00.000Z",
+  "severity": "NOTICE",
+  "logName": "projects/my-project/logs/cloudaudit.googleapis.com%0Factivity",
+  "operation": {
+    "id": "000cc00c-0000-00f0-0e00-00c0c000ddf0",
+    "producer": "cloudsql.googleapis.com",
+    "first": true
+  },
+  "receiveTimestamp": "0000-00-00T00:00:00.000000000Z"
+}
