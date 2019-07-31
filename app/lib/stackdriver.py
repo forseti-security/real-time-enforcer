@@ -50,14 +50,17 @@ class StackdriverParser():
         list is going to be annoying. Long term, this entire class  should be
         replaced when google provides a real-time event delivery solution '''
 
-        last = method_name.split('.')[-1]
-        if last in ['list', 'get', 'List']:
+        last = method_name.split('.')[-1].lower()
+        read_prefixes = ('get', 'list')
+        if last.startswith(read_prefixes):
             return 'read'
 
-        if last in ['create', 'update', 'InsertDataset', 'PatchDataset', 'setIamPermissions', 'SetIamPolicy']:
+        write_prefixes = ('create', 'update', 'insert', 'patch', 'set')
+        if last.startswith(write_prefixes):
             return 'write'
 
-        if last in ['delete']:
+        delete_prefixes = ('delete')
+        if last.startswith(delete_prefixes):
             return 'delete'
 
         else:
