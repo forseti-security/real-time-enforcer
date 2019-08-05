@@ -149,4 +149,11 @@ class StackdriverParser():
             resource_location = ''
             add_resource()
 
+        elif res_type == 'audited_resource' and 'ActivateServices' in method_name:
+            resource_type = 'serviceusage.services'
+            resource_name = prop("resource.labels.service")
+            project_id = prop("resource.labels.project_id")
+            resource_location = ''
+            add_resource()
+
         return resources
