@@ -1,0 +1,75 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "authenticationInfo": {
+      "principalEmail": "user@example.com"
+    },
+    "requestMetadata": {
+      "callerIp": "0.0.0.0",
+      "callerSuppliedUserAgent": "useragent",
+      "requestAttributes": {
+        "time": "0000-00-00T00:00:00.000Z",
+        "auth": {}
+      },
+      "destinationAttributes": {}
+    },
+    "serviceName": "compute.googleapis.com",
+    "methodName": "v1.compute.subnetworks.setPrivateIpGoogleAccess",
+    "authorizationInfo": [
+      {
+        "permission": "compute.subnetworks.setPrivateIpGoogleAccess",
+        "granted": true,
+        "resourceAttributes": {
+          "service": "compute",
+          "name": "projects/example-project/regions/us-east1/subnetworks/example",
+          "type": "compute.subnetworks"
+        }
+      }
+    ],
+    "resourceName": "projects/example-project/regions/us-east1/subnetworks/example",
+    "request": {
+      "@type": "type.googleapis.com/compute.subnetworks.setPrivateIpGoogleAccess",
+      "privateIpGoogleAccess": false
+    },
+    "response": {
+      "operationType": "setPrivateIpGoogleAccess",
+      "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/example-project/regions/us-east1/operations/0000000000000000000",
+      "region": "https://www.googleapis.com/compute/v1/projects/example-project/regions/us-east1",
+      "status": "RUNNING",
+      "name": "000cc00c-0000-00f0-0e00-00c0c000ddf0",
+      "targetId": "0000000000000000000",
+      "id": "0000000000000000000",
+      "@type": "type.googleapis.com/operation",
+      "startTime": "0000-00-00T00:00:00.000Z",
+      "progress": "0",
+      "insertTime": "0000-00-00T00:00:00.000Z",
+      "user": "user@example.com",
+      "selfLink": "https://www.googleapis.com/compute/v1/projects/example-project/regions/us-east1/operations/000cc00c-0000-00f0-0e00-00c0c000ddf0",
+      "targetLink": "https://www.googleapis.com/compute/v1/projects/example-project/regions/us-east1/subnetworks/example"
+    },
+    "resourceLocation": {
+      "currentLocations": [
+        "us-east1"
+      ]
+    }
+  },
+  "insertId": "0000000000",
+  "resource": {
+    "type": "gce_subnetwork",
+    "labels": {
+      "project_id": "example-project",
+      "subnetwork_id": "0000000000000000000",
+      "location": "us-east1",
+      "subnetwork_name": "example"
+    }
+  },
+  "timestamp": "0000-00-00T00:00:00.000Z",
+  "severity": "NOTICE",
+  "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+  "operation": {
+    "id": "000cc00c-0000-00f0-0e00-00c0c000ddf0",
+    "producer": "type.googleapis.com",
+    "first": true
+  },
+  "receiveTimestamp": "0000-00-00T00:00:00.000000000Z"
+}
