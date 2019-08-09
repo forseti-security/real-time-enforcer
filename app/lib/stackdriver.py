@@ -55,7 +55,7 @@ class StackdriverParser():
         if last.startswith(read_prefixes):
             return 'read'
 
-        write_prefixes = ('create', 'update', 'insert', 'patch', 'set', 'activate')
+        write_prefixes = ('create', 'update', 'insert', 'patch', 'set', 'activate', 'deactivate')
         if last.startswith(write_prefixes):
             return 'write'
 
@@ -150,6 +150,13 @@ class StackdriverParser():
             add_resource()
 
         elif res_type == 'audited_resource' and 'ActivateServices' in method_name:
+            resource_type = 'serviceusage.services'
+            resource_name = prop("resource.labels.service")
+            project_id = prop("resource.labels.project_id")
+            resource_location = ''
+            add_resource()
+
+        elif res_type == 'audited_resource' and 'DeactivateServices' in method_name:
             resource_type = 'serviceusage.services'
             resource_name = prop("resource.labels.service")
             project_id = prop("resource.labels.project_id")
