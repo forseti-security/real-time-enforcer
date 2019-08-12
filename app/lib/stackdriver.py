@@ -149,4 +149,16 @@ class StackdriverParser():
             resource_location = ''
             add_resource()
 
+        elif res_type == "cloud_function":
+            resource_name = prop("resource.labels.function_name")
+            project_id = prop("resource.labels.project_id")
+            resource_location = prop("resource.labels.region")
+            if 'SetIamPolicy' in method_name:
+                resource_type = 'cloudfunctions.projects.locations.functions.iam'
+            else:
+                resource_type = 'cloudfunctions.projects.locations.functions'
+                add_resource()
+                resource_type = 'cloudfunctions.projects.locations.functions.iam'
+            add_resource()
+
         return resources

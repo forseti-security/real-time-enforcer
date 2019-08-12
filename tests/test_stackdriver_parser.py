@@ -42,6 +42,7 @@ test_single_asset_log_params = [
     ("cloudsql-resource.labels.json", "sqladmin.instances", "write", "test-instance"),
     ("cloudsql-protoPayload.request.body.json", "sqladmin.instances", "write", "test-instance"),
     ("cloudsql-protoPayload.request.resource.instanceName.instanceId.json", "sqladmin.instances", "write", "test-instance"),
+    ("cloudfunctions-set-iam-policy.json", "cloudfunctions.projects.locations.functions.iam", "write", "example_function"),
 ]
 
 @pytest.mark.parametrize(
