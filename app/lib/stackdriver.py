@@ -150,23 +150,11 @@ class StackdriverParser():
             add_resource()
 
         elif res_type == "gce_subnetwork":
+            resource_type = 'compute.subnetworks'
             resource_name = prop("resource.labels.subnetwork_name")
             project_id = prop("resource.labels.project_id")
             resource_location = prop("resource.labels.location")
-            # privateIpGoogleAccess requires different method
-            if 'setPrivateIpGoogleAccess' in method_name:
-                resource_type = 'compute.subnetworks.privateip'
-                add_resource()
-            # patch method does not contain privateIpGoogleAccess field
-            elif 'patch' in method_name:
-                resource_type = 'compute.subnetworks'
-                add_resource()
-            # this method is for creation of new subnetworks as it might require 2 different remediation methods
-            elif 'insert' in method_name:
-                resource_type = 'compute.subnetworks'
-                add_resource()
-                resource_type = 'compute.subnetworks.privateip'
-                add_resource()
+            add_resource()
 
         elif res_type == "gce_firewall_rule":
             resource_type = 'compute.firewalls'
