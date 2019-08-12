@@ -43,7 +43,7 @@ test_single_asset_log_params = [
     ("cloudsql-protoPayload.request.body.json", "sqladmin.instances", "write", "test-instance"),
     ("cloudsql-protoPayload.request.resource.instanceName.instanceId.json", "sqladmin.instances", "write", "test-instance"),
     ("compute-subnetworks-enable-flow-logs.json", "compute.subnetworks", "write", "example"),
-    ("compute-subnetworks-set-private-ip-google-access.json", "compute.subnetworks.privateip", "write", "example"),
+    ("compute-subnetworks-set-private-ip-google-access.json", "compute.subnetworks", "write", "example"),
     ("compute-firewalls-enable-logs-policy.json", "compute.firewalls", "write", "test-firewall")
 
 ]
