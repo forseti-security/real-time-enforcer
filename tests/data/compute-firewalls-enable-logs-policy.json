@@ -1,0 +1,99 @@
+ {
+   "protoPayload": {
+     "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+     "authenticationInfo": {
+       "principalEmail": "user@domain.com"
+     },
+     "requestMetadata": {
+       "callerIp": "00.00.000.000",
+       "callerSuppliedUserAgent": "user_agent",
+       "requestAttributes": {
+         "time": "0000-00-00T00:00:00.000Z",
+         "reason": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+         "auth": {}
+       },
+       "destinationAttributes": {}
+     },
+     "serviceName": "compute.googleapis.com",
+     "methodName": "v1.compute.firewalls.insert",
+     "authorizationInfo": [
+       {
+         "permission": "compute.firewalls.create",
+         "granted": true,
+         "resourceAttributes": {
+           "service": "compute",
+           "name": "projects/my-project/global/firewalls/test-firewall",
+           "type": "compute.firewalls"
+         }
+       },
+       {
+         "permission": "compute.networks.updatePolicy",
+         "granted": true,
+         "resourceAttributes": {
+           "service": "compute",
+           "name": "projects/my-project/global/networks/default",
+           "type": "compute.networks"
+         }
+       }
+     ],
+     "resourceName": "projects/my-project/global/firewalls/test-firewall",
+     "request": {
+       "direction": "INGRESS",
+       "alloweds": [
+         {
+           "IPProtocol": "tcp",
+           "ports": [
+             "8888"
+           ]
+         }
+       ],
+       "targetTags": [
+         "test"
+       ],
+       "name": "test-firewall",
+       "@type": "type.googleapis.com/compute.firewalls.insert",
+       "priority": "1000",
+       "network": "projects/my-project/global/networks/default",
+       "sourceRanges": [
+         "0.0.0.0/0"
+       ]
+     },
+     "response": {
+       "@type": "type.googleapis.com/operation",
+       "startTime": "0000-00-00T00:00:00.000-00:00",
+       "progress": "0",
+       "insertTime": "0000-00-00T00:00:00.000-00:00",
+       "user": "user@domain.com",
+       "selfLink": "https://www.googleapis.com/compute/v1/projects/my-project/global/operations/operation-0000000000000-0000000000000-00000000-00000000",
+       "targetLink": "https://www.googleapis.com/compute/v1/projects/my-project/global/firewalls/test-firewall",
+       "operationType": "insert",
+       "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/my-project/global/operations/000000000000000000",
+       "status": "RUNNING",
+       "name": "operation-0000000000000-0000000000000-00000000-00000000",
+       "targetId": "0000000000000000000",
+       "id": "000000000000000000"
+     },
+     "resourceLocation": {
+       "currentLocations": [
+         "global"
+       ]
+     }
+   },
+   "insertId": "00000000000",
+   "resource": {
+     "type": "gce_firewall_rule",
+     "labels": {
+       "firewall_rule_id": "0000000000000000123",
+       "project_id": "my-project"
+     }
+   },
+   "timestamp": "0000-00-00T00:00:00.000Z",
+   "severity": "NOTICE",
+   "logName": "projects/my-project/logs/cloudaudit.googleapis.com%2Factivity",
+   "operation": {
+     "id": "operation-0000000000000-0000000000000-00000000-00000000",
+     "producer": "type.googleapis.com",
+     "first": true
+   },
+   "receiveTimestamp": "0000-00-00T00:00:00.000000000Z"
+ }
