@@ -55,7 +55,7 @@ class StackdriverParser():
         if last.startswith(read_prefixes):
             return 'read'
 
-        write_prefixes = ('create', 'update', 'insert', 'patch', 'set')
+        write_prefixes = ('create', 'update', 'insert', 'patch', 'set', 'debug')
         if last.startswith(write_prefixes):
             return 'write'
 
@@ -161,6 +161,13 @@ class StackdriverParser():
             resource_name = prop("protoPayload.resourceName").split('/')[-1]
             project_id = prop("resource.labels.project_id")
             resource_location = ''
+            add_resource()
+
+        elif res_type == "gae_app" and 'DebugInstance' in method_name:
+            resource_type = 'apps.services.versions.instances'
+            resource_name = prop("protoPayload.resourceName")
+            resource_location = ''
+            project_id = prop("resource.labels.project_id")
             add_resource()
 
         return resources
