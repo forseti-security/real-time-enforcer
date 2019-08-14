@@ -1,0 +1,78 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "authenticationInfo": {
+      "principalEmail": "some.user@example.com"
+    },
+    "requestMetadata": {
+      "callerIp": "0.0.0.0",
+      "callerSuppliedUserAgent": "curl",
+      "requestAttributes": {
+        "time": "2000-01-01T00:00:01.689Z",
+        "auth": {}
+      },
+      "destinationAttributes": {}
+    },
+    "serviceName": "cloudfunctions.googleapis.com",
+    "methodName": "google.cloud.functions.v1.CloudFunctionsService.SetIamPolicy",
+    "authorizationInfo": [
+      {
+        "permission": "cloudfunctions.functions.setIamPolicy",
+        "granted": true,
+        "resourceAttributes": {}
+      },
+      {
+        "resource": "projects/example-project/locations/us-central1/functions/example_function",
+        "permission": "cloudfunctions.functions.setIamPolicy",
+        "granted": true,
+        "resourceAttributes": {}
+      },
+      {
+        "permission": "cloudfunctions.functions.setIamPolicy",
+        "granted": true,
+        "resourceAttributes": {}
+      }
+    ],
+    "resourceName": "projects/example-project/locations/us-central1/functions/example_function",
+    "request": {
+      "policy": {
+        "etag": "BwWP3fXnMuQ=",
+        "bindings": [
+          {
+            "members": [
+              "allUsers"
+            ],
+            "role": "roles/cloudfunctions.invoker"
+          }
+        ]
+      },
+      "resource": "projects/example-project/locations/us-central1/functions/example_function",
+      "@type": "type.googleapis.com/google.iam.v1.SetIamPolicyRequest"
+    },
+    "response": {
+      "bindings": [
+        {
+          "members": [
+            "allUsers"
+          ],
+          "role": "roles/cloudfunctions.invoker"
+        }
+      ],
+      "@type": "type.googleapis.com/google.iam.v1.Policy",
+      "etag": "BwWP6bTHbeg="
+    }
+  },
+  "insertId": "g3ygy1c248",
+  "resource": {
+    "type": "cloud_function",
+    "labels": {
+      "project_id": "example-project",
+      "region": "us-central1",
+      "function_name": "example_function"
+    }
+  },
+  "timestamp": "2000-01-01T00:00:01.497Z",
+  "severity": "NOTICE",
+  "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+  "receiveTimestamp": "2000-01-01T11:20:07.411040465Z"
+}
