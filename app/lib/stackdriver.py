@@ -163,4 +163,19 @@ class StackdriverParser():
             resource_location = ''
             add_resource()
 
+        elif res_type == "gke_cluster":
+            resource_type = 'container.projects.locations.clusters'
+            resource_name = prop("resource.labels.cluster_name")
+            project_id = prop("resource.labels.project_id")
+            resource_location = prop("resource.labels.location")
+            add_resource()
+
+        elif res_type == "gke_nodepool":
+            resource_type = 'container.projects.locations.clusters.nodePools'
+            # nodePool requires parent cluster so we concat it to single variable
+            resource_name = prop("resource.labels.cluster_name") + "/nodePools/" + prop("resource.labels.nodepool_name")
+            project_id = prop("resource.labels.project_id")
+            resource_location = prop("resource.labels.location")
+            add_resource()
+
         return resources
