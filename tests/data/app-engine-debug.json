@@ -1,0 +1,38 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "authenticationInfo": {
+      "principalEmail": "example@email.com"
+    },
+    "requestMetadata": {
+      "requestAttributes": {},
+      "destinationAttributes": {}
+    },
+    "serviceName": "appengine.googleapis.com",
+    "methodName": "google.appengine.v1.Instances.DebugInstance",
+    "resourceName": "apps/my_project/services/default/versions/test-instance/instances/aef-default-test-instance",
+    "resourceLocation": {
+      "currentLocations": [
+        "us-central1"
+      ]
+    }
+  },
+  "insertId": "509n2xdgx0k",
+  "resource": {
+    "type": "gae_app",
+    "labels": {
+      "module_id": "default",
+      "project_id": "my_project",
+      "version_id": "20190805t143926"
+    }
+  },
+  "timestamp": "0000-00-00T00:00:00.000Z",
+  "severity": "NOTICE",
+  "logName": "projects/my_project/logs/cloudaudit.googleapis.com%2Factivity",
+  "operation": {
+    "id": "ed13b6c2-f6b0-4291-9b9f-fb122bea5c25",
+    "producer": "appengine.googleapis.com/admin",
+    "last": true
+  },
+  "receiveTimestamp": "0000-00-00T00:00:00.000Z"
+}
