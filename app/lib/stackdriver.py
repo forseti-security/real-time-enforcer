@@ -182,4 +182,11 @@ class StackdriverParser():
                 resource_type = 'cloudfunctions.projects.locations.functions.iam'
             add_resource()
 
+        elif res_type == "cloud_dataproc_cluster":
+            resource_type = 'dataproc.clusters'
+            project_id = prop("resource.labels.project_id")
+            resource_name = prop("resource.labels.cluster_name")
+            resource_location = prop("resource.labels.region")
+            add_resource()
+
         return resources
