@@ -46,7 +46,7 @@ test_single_asset_log_params = [
     ("compute-subnetworks-set-private-ip-google-access.json", "compute.subnetworks", "write", "example"),
     ("compute-firewalls-enable-logs-policy.json", "compute.firewalls", "write", "test-firewall"),
     ("gke-cluster-update.json", "container.projects.locations.clusters", "write", "example-cluster"),
-    ("gke-nodepool-update.json", "container.projects.locations.clusters.nodePools", "write", "example-cluster/nodePools/example-pool")
+    ("gke-nodepool-set.json", "container.projects.locations.clusters.nodePools", "write", "example-cluster/nodePools/example-pool")
 
 ]
 

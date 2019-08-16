@@ -8,13 +8,13 @@
             "callerIp": "0.0.0.0",
             "callerSuppliedUserAgent": "curl",
             "requestAttributes": {
-                "time": "2000-01-01T00:00:01.029022927Z",
+                "time": "2000-01-01T00:00:01.654806738Z",
                 "auth": {}
             },
             "destinationAttributes": {}
         },
         "serviceName": "container.googleapis.com",
-        "methodName": "google.container.v1.ClusterManager.UpdateNodePool",
+        "methodName": "google.container.v1.ClusterManager.SetNodePoolManagement",
         "authorizationInfo": [
             {
                 "permission": "container.clusters.update",
@@ -24,18 +24,21 @@
         ],
         "resourceName": "projects/example-project/zones/europe-west4-a/clusters/example-cluster/nodePools/example-pool",
         "request": {
-            "@type": "type.googleapis.com/google.container.v1alpha1.UpdateNodePoolRequest",
             "name": "projects/example-project/locations/europe-west4-a/clusters/example-cluster/nodePools/example-pool",
-            "imageType": "COS"
+            "management": {
+                "autoRepair": true,
+                "autoUpgrade": true
+            },
+            "@type": "type.googleapis.com/google.container.v1alpha1.SetNodePoolManagementRequest"
         },
         "response": {
-            "targetLink": "https://container.googleapis.com/v1alpha1/projects/example-project/zones/europe-west4-a/clusters/example-cluster/nodePools/example-pool",
-            "@type": "type.googleapis.com/google.container.v1alpha1.Operation",
-            "operationType": "UPGRADE_NODES",
-            "startTime": "2000-01-01T00:00:01.029226437Z",
             "status": "RUNNING",
             "name": "operation-1-1",
-            "selfLink": "https://container.googleapis.com/v1alpha1/projects/example-project/zones/europe-west4-a/operations/operation-1-1"
+            "selfLink": "https://container.googleapis.com/v1alpha1/projects/example-project/zones/europe-west4-a/operations/operation-1-1",
+            "targetLink": "https://container.googleapis.com/v1alpha1/projects/example-project/zones/europe-west4-a/clusters/example-cluster/nodePools/example-pool",
+            "@type": "type.googleapis.com/google.container.v1alpha1.Operation",
+            "operationType": "SET_NODE_POOL_MANAGEMENT",
+            "startTime": "2000-01-01T00:00:01.655021234Z"
         },
         "resourceLocation": {
             "currentLocations": [
@@ -43,23 +46,23 @@
             ]
         }
     },
-    "insertId": "aaaabbb",
+    "insertId": "1",
     "resource": {
         "type": "gke_nodepool",
         "labels": {
             "project_id": "example-project",
-            "cluster_name": "example-cluster",
             "nodepool_name": "example-pool",
+            "cluster_name": "example-cluster",
             "location": "europe-west4-a"
         }
     },
-    "timestamp": "2000-01-01T00:00:01.049096701Z",
-    "severity": "NOTICE",
-    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+    "timestamp": "2000-01-01T00:00:01.673796417Z",
+    "severity": "INFO",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Fdata_access",
     "operation": {
         "id": "operation-1-1",
         "producer": "container.googleapis.com",
         "first": true
     },
-    "receiveTimestamp": "2000-01-01T00:00:01.136729811Z"
+    "receiveTimestamp": "2000-01-01T00:00:01.400552358Z"
 }
