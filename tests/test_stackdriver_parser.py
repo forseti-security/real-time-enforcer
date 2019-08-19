@@ -46,7 +46,8 @@ test_single_asset_log_params = [
     ("cloudfunctions-set-iam-policy.json", "cloudfunctions.projects.locations.functions.iam", "write", "example_function"),
     ("compute-subnetworks-enable-flow-logs.json", "compute.subnetworks", "write", "example"),
     ("compute-subnetworks-set-private-ip-google-access.json", "compute.subnetworks", "write", "example"),
-    ("compute-firewalls-enable-logs-policy.json", "compute.firewalls", "write", "test-firewall")
+    ("compute-firewalls-enable-logs-policy.json", "compute.firewalls", "write", "test-firewall"),
+    ("compute-hardened-images.json", "compute.disks", "write", "test-instance")
 
 ]
 

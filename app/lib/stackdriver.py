@@ -170,6 +170,16 @@ class StackdriverParser():
             project_id = prop("resource.labels.project_id")
             add_resource()
 
+        elif res_type == "gce_instance":
+            #gce instance return us result images whitch doesn't contains the source_image part.
+            #so we check source_image through the disk resource
+            resource_type = 'compute.disks'
+            disk_name = prop("protoPayload.request.disks[?boot].diskName | [0]")
+            resource_name = disk_name or prop("protoPayload.resourceName").split('/')[-1]
+            resource_location = prop("resource.labels.zone")
+            project_id = prop("resource.labels.project_id")
+            add_resource()
+
         elif res_type == "cloud_function":
             resource_name = prop("resource.labels.function_name")
             project_id = prop("resource.labels.project_id")

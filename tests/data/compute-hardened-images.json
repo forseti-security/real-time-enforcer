@@ -1,0 +1,170 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "authenticationInfo": {
+      "principalEmail": "user@domain.com"
+    },
+    "requestMetadata": {
+      "callerIp": "185.117.243.10",
+      "callerSuppliedUserAgent": "",
+      "requestAttributes": {
+        "time": "2019-08-16T10:09:27.081Z",
+        "auth": {}
+      },
+      "destinationAttributes": {}
+    },
+    "serviceName": "compute.googleapis.com",
+    "methodName": "v1.compute.instances.insert",
+    "authorizationInfo": [
+      {
+        "permission": "compute.instances.create",
+        "granted": true,
+        "resourceAttributes": {
+          "service": "compute",
+          "name": "projects/my_project/zones/my_zone/instances/test-instance",
+          "type": "compute.instances"
+        }
+      },
+      {
+        "permission": "compute.disks.create",
+        "granted": true,
+        "resourceAttributes": {
+          "service": "compute",
+          "name": "projects/my_project/zones/my_zone/disks/test-instance",
+          "type": "compute.disks"
+        }
+      },
+      {
+        "permission": "compute.subnetworks.use",
+        "granted": true,
+        "resourceAttributes": {
+          "service": "compute",
+          "name": "projects/my_project/regions/us-west1/subnetworks/default",
+          "type": "compute.subnetworks"
+        }
+      },
+      {
+        "permission": "compute.subnetworks.useExternalIp",
+        "granted": true,
+        "resourceAttributes": {
+          "service": "compute",
+          "name": "projects/my_project/regions/us-west1/subnetworks/default",
+          "type": "compute.subnetworks"
+        }
+      },
+      {
+        "permission": "compute.instances.setMetadata",
+        "granted": true,
+        "resourceAttributes": {
+          "service": "compute",
+          "name": "projects/my_project/zones/my_zone/instances/test-instance",
+          "type": "compute.instances"
+        }
+      },
+      {
+        "permission": "compute.instances.setDeletionProtection",
+        "granted": true,
+        "resourceAttributes": {
+          "service": "compute",
+          "name": "projects/my_project/zones/my_zone/instances/test-instance",
+          "type": "compute.instances"
+        }
+      },
+      {
+        "permission": "compute.instances.setServiceAccount",
+        "granted": true,
+        "resourceAttributes": {
+          "service": "compute",
+          "name": "projects/my_project/zones/my_zone/instances/test-instance",
+          "type": "compute.instances"
+        }
+      }
+    ],
+    "resourceName": "projects/my_project/zones/my_zone/instances/test-instance",
+    "request": {
+      "deletionProtection": true,
+      "serviceAccounts": [
+        {
+          "scopes": [
+            "https://www.googleapis.com/auth/devstorage.read_only",
+            "https://www.googleapis.com/auth/logging.write",
+            "https://www.googleapis.com/auth/monitoring.write",
+            "https://www.googleapis.com/auth/pubsub",
+            "https://www.googleapis.com/auth/service.management.readonly",
+            "https://www.googleapis.com/auth/servicecontrol",
+            "https://www.googleapis.com/auth/trace.append"
+          ],
+          "email": "default"
+        }
+      ],
+      "name": "test-instance",
+      "disks": [
+        {
+          "mode": "READ_WRITE",
+          "autoDelete": true,
+          "initializeParams": {
+            "sourceImage": "https://www.googleapis.com/compute/v1/projects/root_project/global/images/family/project-ubuntu-1804-lts"
+          },
+          "boot": true,
+          "type": "PERSISTENT"
+        }
+      ],
+      "@type": "type.googleapis.com/compute.instances.insert",
+      "machineType": "https://www.googleapis.com/compute/v1/projects/my_project/zones/my_zone/machineTypes/n1-standard-1",
+      "canIpForward": false,
+      "scheduling": {
+        "automaticRestart": true
+      },
+      "networkInterfaces": [
+        {
+          "network": "https://www.googleapis.com/compute/v1/projects/my_project/global/networks/default",
+          "accessConfigs": [
+            {
+              "name": "external-nat",
+              "type": "ONE_TO_ONE_NAT"
+            }
+          ]
+        }
+      ]
+    },
+    "response": {
+      "name": "operation-000000000000-0000000000000-00000af-00000000",
+      "targetId": "000000000000000000",
+      "id": "000000000000000000",
+      "@type": "type.googleapis.com/operation",
+      "startTime": "0000-00-00T00:00:00.000-00:00",
+      "progress": "0",
+      "zone": "https://www.googleapis.com/compute/v1/projects/my_project/zones/my_zone",
+      "insertTime": "0000-00-00T00:00:00.000-00:00",
+      "user": "user@domain.com",
+      "selfLink": "https://www.googleapis.com/compute/v1/projects/my_project/zones/my_zone/operations/operation-0000000000000-0000000000000-00000000-00000000",
+      "targetLink": "https://www.googleapis.com/compute/v1/projects/my_project/zones/my_zone/instances/test-instance",
+      "operationType": "insert",
+      "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/my_project/zones/my_zone/operations/000000000000000000",
+      "status": "RUNNING"
+    },
+    "resourceLocation": {
+      "currentLocations": [
+        "my_zone"
+      ]
+    }
+  },
+  "insertId": "-9p0004do0000",
+  "resource": {
+    "type": "gce_instance",
+    "labels": {
+      "zone": "my_zone",
+      "project_id": "my_project",
+      "instance_id": "000000000000000000"
+    }
+  },
+  "timestamp": "0000-00-00T00:00:00.000Z",
+  "severity": "NOTICE",
+  "logName": "projects/my_project/logs/cloudaudit.googleapis.com%2Factivity",
+  "operation": {
+    "id": "operation-000000000000-0000000000000-00000af-00000000",
+    "producer": "type.googleapis.com",
+    "first": true
+  },
+  "receiveTimestamp": "0000-00-00T00:00:00.000Z"
+}
