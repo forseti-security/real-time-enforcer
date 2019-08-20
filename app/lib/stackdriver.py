@@ -55,7 +55,7 @@ class StackdriverParser():
         if last.startswith(read_prefixes):
             return 'read'
 
-        write_prefixes = ('create', 'update', 'insert', 'patch', 'set', 'debug')
+        write_prefixes = ('create', 'update', 'insert', 'patch', 'set', 'debug', 'activate', 'deactivate')
         if last.startswith(write_prefixes):
             return 'write'
 
@@ -145,6 +145,20 @@ class StackdriverParser():
         elif res_type == "pubsub_topic" and 'SetIamPolicy' in method_name:
             resource_type = 'pubsub.projects.topics.iam'
             resource_name = prop("resource.labels.topic_id").split('/')[-1]
+            project_id = prop("resource.labels.project_id")
+            resource_location = ''
+            add_resource()
+
+        elif res_type == 'audited_resource' and 'ActivateServices' in method_name:
+            resource_type = 'serviceusage.services'
+            resource_name = prop("resource.labels.service")
+            project_id = prop("resource.labels.project_id")
+            resource_location = ''
+            add_resource()
+
+        elif res_type == 'audited_resource' and 'DeactivateServices' in method_name:
+            resource_type = 'serviceusage.services'
+            resource_name = prop("resource.labels.service")
             project_id = prop("resource.labels.project_id")
             resource_location = ''
             add_resource()
