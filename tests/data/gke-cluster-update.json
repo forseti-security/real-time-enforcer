@@ -1,0 +1,64 @@
+{
+    "protoPayload": {
+        "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+        "authenticationInfo": {
+            "principalEmail": "example@example.com"
+        },
+        "requestMetadata": {
+            "callerIp": "0.0.0.0",
+            "callerSuppliedUserAgent": "curl",
+            "requestAttributes": {
+                "time": "2000-01-01T00:00:01.579869181Z",
+                "auth": {}
+            },
+            "destinationAttributes": {}
+        },
+        "serviceName": "container.googleapis.com",
+        "methodName": "google.container.v1.ClusterManager.SetLegacyAbac",
+        "authorizationInfo": [
+            {
+                "permission": "container.clusters.update",
+                "granted": true,
+                "resourceAttributes": {}
+            }
+        ],
+        "resourceName": "projects/example-project/zones/europe-west4-a/clusters/example-cluster",
+        "request": {
+            "name": "projects/example-project/locations/europe-west4-a/clusters/example-cluster",
+            "enabled": true,
+            "@type": "type.googleapis.com/google.container.v1alpha1.SetLegacyAbacRequest"
+        },
+        "response": {
+            "status": "RUNNING",
+            "name": "operation-1-1",
+            "selfLink": "https://container.googleapis.com/v1alpha1/projects/example-project/zones/europe-west4-a/operations/operation-1-1",
+            "targetLink": "https://container.googleapis.com/v1alpha1/projects/example-project/zones/europe-west4-a/clusters/example-cluster",
+            "@type": "type.googleapis.com/google.container.v1alpha1.Operation",
+            "operationType": "UPDATE_CLUSTER",
+            "startTime": "2000-01-01T00:00:01.580331131Z"
+        },
+        "resourceLocation": {
+            "currentLocations": [
+                "europe-west4-a"
+            ]
+        }
+    },
+    "insertId": "aaabbb",
+    "resource": {
+        "type": "gke_cluster",
+        "labels": {
+            "project_id": "example-project",
+            "cluster_name": "example-cluster",
+            "location": "europe-west4-a"
+        }
+    },
+    "timestamp": "2000-01-01T00:00:01.594543941Z",
+    "severity": "INFO",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Fdata_access",
+    "operation": {
+        "id": "operation-1-1",
+        "producer": "container.googleapis.com",
+        "first": true
+    },
+    "receiveTimestamp": "2000-01-01T00:00:01.264355708Z"
+}
