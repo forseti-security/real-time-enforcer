@@ -47,7 +47,7 @@ test_single_asset_log_params = [
     ("compute-subnetworks-enable-flow-logs.json", "compute.subnetworks", "write", "example"),
     ("compute-subnetworks-set-private-ip-google-access.json", "compute.subnetworks", "write", "example"),
     ("compute-firewalls-enable-logs-policy.json", "compute.firewalls", "write", "test-firewall"),
-    ("dataproc_createcluster.json", "dataproc.clusters", "write", "test-dataproc-cluster")
+    ("dataproc_createcluster.json", "dataproc.clusters", "write", "test-dataproc-cluster"),
     ("gke-cluster-update.json", "container.projects.locations.clusters", "write", "example-cluster"),
     ("gke-nodepool-set.json", "container.projects.locations.clusters.nodePools", "write", "example-cluster/nodePools/example-pool")
 ]
