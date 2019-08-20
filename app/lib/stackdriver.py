@@ -182,4 +182,30 @@ class StackdriverParser():
                 resource_type = 'cloudfunctions.projects.locations.functions.iam'
             add_resource()
 
+        elif res_type == "gke_cluster":
+            resource_type = 'container.projects.locations.clusters'
+            resource_name = prop("resource.labels.cluster_name")
+            project_id = prop("resource.labels.project_id")
+            resource_location = prop("resource.labels.location")
+            add_resource()
+            # add node pool resources for eval on new cluster creation
+            if "create" in method_name.lower() and prop("protoPayload.request.cluster.nodePools") is not None:
+                for pool in prop("protoPayload.request.cluster.nodePools"):
+                    resource_type = 'container.projects.locations.clusters.nodePools'
+                    resource_name = prop("resource.labels.cluster_name") + "/nodePools/" + pool.get('name')
+                    add_resource()
+
+        elif res_type == "gke_nodepool":
+            resource_type = 'container.projects.locations.clusters.nodePools'
+            # nodePool requires parent cluster so we concat it to single variable
+            resource_name = prop("resource.labels.cluster_name") + "/nodePools/" + prop("resource.labels.nodepool_name")
+            project_id = prop("resource.labels.project_id")
+            resource_location = prop("resource.labels.location")
+            add_resource()
+            # if nodepool image was updated, add cluster resource for re-evaluation
+            if "update" in method_name.lower():
+                resource_type = 'container.projects.locations.clusters'
+                resource_name = prop("resource.labels.cluster_name")
+                add_resource()
+
         return resources
