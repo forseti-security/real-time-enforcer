@@ -1,0 +1,90 @@
+{
+   "protoPayload": {
+     "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+     "status": {},
+     "authenticationInfo": {
+       "principalEmail": "user@domain.com"
+     },
+     "requestMetadata": {
+       "callerIp": "123.123.123.123",
+       "callerSuppliedUserAgent": "user_agent",
+       "requestAttributes": {
+         "time": "0000-00-00T00:00:00.000Z",
+         "auth": {}
+       },
+       "destinationAttributes": {}
+     },
+     "serviceName": "dataproc.googleapis.com",
+     "methodName": "google.cloud.dataproc.v1beta2.ClusterController.CreateCluster",
+     "authorizationInfo": [
+       {
+         "permission": "dataproc.clusters.create",
+         "granted": true,
+         "resourceAttributes": {}
+       }
+     ],
+     "resourceName": "projects/my-project/regions/global/clusters/test-dataproc-cluster",
+     "request": {
+       "projectId": "my-project",
+       "cluster": {
+         "config": {
+           "workerConfig": {
+             "diskConfig": {
+               "bootDiskSizeGb": 15,
+               "bootDiskType": "pd-standard"
+             },
+             "numInstances": 2,
+             "machineTypeUri": "n1-standard-1"
+           },
+           "masterConfig": {
+             "machineTypeUri": "n1-standard-1",
+             "diskConfig": {
+               "bootDiskType": "pd-standard",
+               "bootDiskSizeGb": 15
+             },
+             "numInstances": 1
+           },
+           "secondaryWorkerConfig": {
+             "isPreemptible": true
+           },
+           "gceClusterConfig": {
+             "internalIpOnly": true,
+             "zoneUri": "us-east1-b",
+             "subnetworkUri": "default"
+           },
+           "softwareConfig": {
+             "imageVersion": "1.3-deb9"
+           }
+         },
+         "clusterName": "test-dataproc-cluster",
+         "projectId": "my-project"
+       },
+       "region": "global",
+       "@type": "type.googleapis.com/google.cloud.dataproc.v1beta2.CreateClusterRequest"
+     },
+     "resourceLocation": {
+       "currentLocations": [
+         "global"
+       ]
+     }
+   },
+   "insertId": "abc2def5gh",
+   "resource": {
+     "type": "cloud_dataproc_cluster",
+     "labels": {
+       "project_id": "my-project",
+       "cluster_name": "test-dataproc-cluster",
+       "region": "global",
+       "cluster_uuid": "123a45a6-f7f8-901c-23e4-5dfb67db8f90"
+     }
+   },
+   "timestamp": "0000-00-00T00:00:00.000Z",
+   "severity": "NOTICE",
+   "logName": "projects/my-project/logs/cloudaudit.googleapis.com%2Factivity",
+   "operation": {
+     "id": "projects/my-project/regions/global/operations/abcde10f-72g4-4hi7-g694-5bd27kl08mno",
+     "producer": "dataproc.googleapis.com",
+     "first": true
+   },
+   "receiveTimestamp": "0000-00-00T00:00:00.000000000Z"
+}
