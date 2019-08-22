@@ -55,7 +55,7 @@ class StackdriverParser():
         if last.startswith(read_prefixes):
             return 'read'
 
-        write_prefixes = ('create', 'update', 'insert', 'patch', 'set')
+        write_prefixes = ('create', 'update', 'insert', 'patch', 'set', 'debug', 'activate', 'deactivate')
         if last.startswith(write_prefixes):
             return 'write'
 
@@ -149,6 +149,20 @@ class StackdriverParser():
             resource_location = ''
             add_resource()
 
+        elif res_type == 'audited_resource' and 'ActivateServices' in method_name:
+            resource_type = 'serviceusage.services'
+            resource_name = prop("resource.labels.service")
+            project_id = prop("resource.labels.project_id")
+            resource_location = ''
+            add_resource()
+
+        elif res_type == 'audited_resource' and 'DeactivateServices' in method_name:
+            resource_type = 'serviceusage.services'
+            resource_name = prop("resource.labels.service")
+            project_id = prop("resource.labels.project_id")
+            resource_location = ''
+            add_resource()
+
         elif res_type == "gce_subnetwork":
             resource_type = 'compute.subnetworks'
             resource_name = prop("resource.labels.subnetwork_name")
@@ -163,6 +177,13 @@ class StackdriverParser():
             resource_location = ''
             add_resource()
 
+        elif res_type == "gae_app" and 'DebugInstance' in method_name:
+            resource_type = 'apps.services.versions.instances'
+            resource_name = prop("protoPayload.resourceName")
+            resource_location = ''
+            project_id = prop("resource.labels.project_id")
+            add_resource()
+
         elif res_type == "cloud_function":
             resource_name = prop("resource.labels.function_name")
             project_id = prop("resource.labels.project_id")
@@ -174,5 +195,38 @@ class StackdriverParser():
                 add_resource()
                 resource_type = 'cloudfunctions.projects.locations.functions.iam'
             add_resource()
+
+        elif res_type == "cloud_dataproc_cluster":
+            resource_type = 'dataproc.clusters'
+            project_id = prop("resource.labels.project_id")
+            resource_name = prop("resource.labels.cluster_name")
+            resource_location = prop("resource.labels.region")
+            add_resource()
+
+        elif res_type == "gke_cluster":
+            resource_type = 'container.projects.locations.clusters'
+            resource_name = prop("resource.labels.cluster_name")
+            project_id = prop("resource.labels.project_id")
+            resource_location = prop("resource.labels.location")
+            add_resource()
+            # add node pool resources for eval on new cluster creation
+            if "create" in method_name.lower() and prop("protoPayload.request.cluster.nodePools") is not None:
+                for pool in prop("protoPayload.request.cluster.nodePools"):
+                    resource_type = 'container.projects.locations.clusters.nodePools'
+                    resource_name = prop("resource.labels.cluster_name") + "/nodePools/" + pool.get('name')
+                    add_resource()
+
+        elif res_type == "gke_nodepool":
+            resource_type = 'container.projects.locations.clusters.nodePools'
+            # nodePool requires parent cluster so we concat it to single variable
+            resource_name = prop("resource.labels.cluster_name") + "/nodePools/" + prop("resource.labels.nodepool_name")
+            project_id = prop("resource.labels.project_id")
+            resource_location = prop("resource.labels.location")
+            add_resource()
+            # if nodepool image was updated, add cluster resource for re-evaluation
+            if "update" in method_name.lower():
+                resource_type = 'container.projects.locations.clusters'
+                resource_name = prop("resource.labels.cluster_name")
+                add_resource()
 
         return resources

@@ -34,6 +34,7 @@ def get_test_data(filename):
 # parameters for testing logs that should return a single asset
 test_single_asset_log_params = [
     # filename, expected_resource_type, expected_operation_type, expected_resource_name
+    ("app-engine-debug.json", "apps.services.versions.instances", "write", "apps/my_project/services/default/versions/test-instance/instances/aef-default-test-instance"),
     ("bq-ds-set-iam-policy.json", "bigquery.datasets", "write", "wooo"),
     ("pubsub-subscription-set-iam-policy.json", "pubsub.projects.subscriptions.iam", "write", "test-subscription"),
     ("pubsub-topic-set-iam-policy.json", "pubsub.projects.topics.iam", "write", "test-topic"),
@@ -45,8 +46,10 @@ test_single_asset_log_params = [
     ("cloudfunctions-set-iam-policy.json", "cloudfunctions.projects.locations.functions.iam", "write", "example_function"),
     ("compute-subnetworks-enable-flow-logs.json", "compute.subnetworks", "write", "example"),
     ("compute-subnetworks-set-private-ip-google-access.json", "compute.subnetworks", "write", "example"),
-    ("compute-firewalls-enable-logs-policy.json", "compute.firewalls", "write", "test-firewall")
-
+    ("compute-firewalls-enable-logs-policy.json", "compute.firewalls", "write", "test-firewall"),
+    ("dataproc_createcluster.json", "dataproc.clusters", "write", "test-dataproc-cluster"),
+    ("gke-cluster-update.json", "container.projects.locations.clusters", "write", "example-cluster"),
+    ("gke-nodepool-set.json", "container.projects.locations.clusters.nodePools", "write", "example-cluster/nodePools/example-pool")
 ]
 
 @pytest.mark.parametrize(
