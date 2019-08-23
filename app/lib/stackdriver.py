@@ -55,7 +55,7 @@ class StackdriverParser():
         if last.startswith(read_prefixes):
             return 'read'
 
-        write_prefixes = ('create', 'update', 'insert', 'patch', 'set', 'debug', 'activate', 'deactivate')
+        write_prefixes = ('create', 'update', 'insert', 'patch', 'set', 'debug', 'activate', 'deactivate', 'expand')
         if last.startswith(write_prefixes):
             return 'write'
 
