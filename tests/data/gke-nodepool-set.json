@@ -1,0 +1,68 @@
+{
+    "protoPayload": {
+        "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+        "authenticationInfo": {
+            "principalEmail": "example@example.com"
+        },
+        "requestMetadata": {
+            "callerIp": "0.0.0.0",
+            "callerSuppliedUserAgent": "curl",
+            "requestAttributes": {
+                "time": "2000-01-01T00:00:01.654806738Z",
+                "auth": {}
+            },
+            "destinationAttributes": {}
+        },
+        "serviceName": "container.googleapis.com",
+        "methodName": "google.container.v1.ClusterManager.SetNodePoolManagement",
+        "authorizationInfo": [
+            {
+                "permission": "container.clusters.update",
+                "granted": true,
+                "resourceAttributes": {}
+            }
+        ],
+        "resourceName": "projects/example-project/zones/europe-west4-a/clusters/example-cluster/nodePools/example-pool",
+        "request": {
+            "name": "projects/example-project/locations/europe-west4-a/clusters/example-cluster/nodePools/example-pool",
+            "management": {
+                "autoRepair": true,
+                "autoUpgrade": true
+            },
+            "@type": "type.googleapis.com/google.container.v1alpha1.SetNodePoolManagementRequest"
+        },
+        "response": {
+            "status": "RUNNING",
+            "name": "operation-1-1",
+            "selfLink": "https://container.googleapis.com/v1alpha1/projects/example-project/zones/europe-west4-a/operations/operation-1-1",
+            "targetLink": "https://container.googleapis.com/v1alpha1/projects/example-project/zones/europe-west4-a/clusters/example-cluster/nodePools/example-pool",
+            "@type": "type.googleapis.com/google.container.v1alpha1.Operation",
+            "operationType": "SET_NODE_POOL_MANAGEMENT",
+            "startTime": "2000-01-01T00:00:01.655021234Z"
+        },
+        "resourceLocation": {
+            "currentLocations": [
+                "europe-west4-a"
+            ]
+        }
+    },
+    "insertId": "1",
+    "resource": {
+        "type": "gke_nodepool",
+        "labels": {
+            "project_id": "example-project",
+            "nodepool_name": "example-pool",
+            "cluster_name": "example-cluster",
+            "location": "europe-west4-a"
+        }
+    },
+    "timestamp": "2000-01-01T00:00:01.673796417Z",
+    "severity": "INFO",
+    "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Fdata_access",
+    "operation": {
+        "id": "operation-1-1",
+        "producer": "container.googleapis.com",
+        "first": true
+    },
+    "receiveTimestamp": "2000-01-01T00:00:01.400552358Z"
+}
