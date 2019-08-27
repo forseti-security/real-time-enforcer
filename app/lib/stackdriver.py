@@ -240,15 +240,16 @@ class StackdriverParser():
                 add_resource()
 
         elif res_type == "audited_resource" and method_name.startswith('google.bigtable.admin'):
-            resource_name = prop("protoPayload.resourceName").split('/')[-1]
-            project_id = prop("resource.labels.project_id")
-            resource_location = ''
-            if 'SetIamPolicy' in method_name:
-                resource_type = 'bigtableadmin.projects.instances.iam'
-            else:
-                resource_type = 'bigtableadmin.projects.instances'
+            if 'BigtableInstanceAdmin' in method_name:
+                resource_name = prop("protoPayload.resourceName").split('/')[-1]
+                project_id = prop("resource.labels.project_id")
+                resource_location = ''
+                if 'SetIamPolicy' in method_name:
+                    resource_type = 'bigtableadmin.projects.instances.iam'
+                else:
+                    resource_type = 'bigtableadmin.projects.instances'
+                    add_resource()
+                    resource_type = 'bigtableadmin.projects.instances.iam'
                 add_resource()
-                resource_type = 'bigtableadmin.projects.instances.iam'
-            add_resource()
 
         return resources
