@@ -1,0 +1,67 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "authenticationInfo": {
+      "principalEmail": "example@example.com"
+    },
+    "requestMetadata": {
+      "callerIp": "0.0.0.0",
+      "callerSuppliedUserAgent": "curl",
+      "requestAttributes": {
+        "time": "2000-01-01T00:00:01.339010394Z",
+        "auth": {}
+      },
+      "destinationAttributes": {}
+    },
+    "serviceName": "bigtableadmin.googleapis.com",
+    "methodName": "google.bigtable.admin.v2.BigtableInstanceAdmin.SetIamPolicy",
+    "authorizationInfo": [
+      {
+        "resource": "projects/example-project/instances/example-instance",
+        "permission": "bigtable.instances.setIamPolicy",
+        "granted": true,
+        "resourceAttributes": {}
+      }
+    ],
+    "resourceName": "projects/example-project/instances/example-instance",
+    "request": {
+      "resource": "projects/example-project/instances/example-instance",
+      "@type": "type.googleapis.com/google.iam.v1.SetIamPolicyRequest",
+      "policy": {
+        "bindings": [
+          {
+            "role": "roles/bigtable.viewer",
+            "members": [
+              "group:allUsers"
+            ]
+          }
+        ]
+      }
+    },
+    "response": {
+      "etag": "11111",
+      "bindings": [
+        {
+          "role": "roles/bigtable.viewer",
+          "members": [
+            "group:allUsers"
+          ]
+        }
+      ],
+      "@type": "type.googleapis.com/google.iam.v1.Policy"
+    }
+  },
+  "insertId": "11111",
+  "resource": {
+    "type": "audited_resource",
+    "labels": {
+      "method": "google.bigtable.admin.v2.BigtableInstanceAdmin.SetIamPolicy",
+      "project_id": "example-project",
+      "service": "bigtableadmin.googleapis.com"
+    }
+  },
+  "timestamp": "2000-01-01T00:00:01.333165743Z",
+  "severity": "NOTICE",
+  "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+  "receiveTimestamp": "2000-01-01T00:00:01.363595014Z"
+}
