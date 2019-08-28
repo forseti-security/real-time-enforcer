@@ -184,6 +184,16 @@ class StackdriverParser():
             project_id = prop("resource.labels.project_id")
             add_resource()
 
+        elif res_type == "gce_instance":
+            #gce instance return us result images whitch doesn't contains the source_image part.
+            #so we check source_image through the disk resource
+            resource_type = 'compute.disks'
+            disk_name = prop("protoPayload.request.disks[?boot].diskName | [0]")
+            resource_name = disk_name or prop("protoPayload.resourceName").split('/')[-1]
+            resource_location = prop("resource.labels.zone")
+            project_id = prop("resource.labels.project_id")
+            add_resource()
+
         elif res_type == "cloud_function":
             resource_name = prop("resource.labels.function_name")
             project_id = prop("resource.labels.project_id")
@@ -228,5 +238,17 @@ class StackdriverParser():
                 resource_type = 'container.projects.locations.clusters'
                 resource_name = prop("resource.labels.cluster_name")
                 add_resource()
+
+        elif res_type == "audited_resource" and 'BigtableInstanceAdmin' in method_name:
+            resource_name = prop("protoPayload.resourceName").split('/')[-1]
+            project_id = prop("resource.labels.project_id")
+            resource_location = ''
+            if 'SetIamPolicy' in method_name:
+                resource_type = 'bigtableadmin.projects.instances.iam'
+            else:
+                resource_type = 'bigtableadmin.projects.instances'
+                add_resource()
+                resource_type = 'bigtableadmin.projects.instances.iam'
+            add_resource()
 
         return resources

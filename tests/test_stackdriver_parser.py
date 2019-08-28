@@ -36,6 +36,7 @@ test_single_asset_log_params = [
     # filename, expected_resource_type, expected_operation_type, expected_resource_name
     ("app-engine-debug.json", "apps.services.versions.instances", "write", "apps/my_project/services/default/versions/test-instance/instances/aef-default-test-instance"),
     ("bq-ds-set-iam-policy.json", "bigquery.datasets", "write", "wooo"),
+    ("bigtable-set-iam-policy.json", "bigtableadmin.projects.instances.iam", "write", "example-instance"),
     ("pubsub-subscription-set-iam-policy.json", "pubsub.projects.subscriptions.iam", "write", "test-subscription"),
     ("pubsub-topic-set-iam-policy.json", "pubsub.projects.topics.iam", "write", "test-topic"),
 
@@ -47,6 +48,7 @@ test_single_asset_log_params = [
     ("compute-subnetworks-enable-flow-logs.json", "compute.subnetworks", "write", "example"),
     ("compute-subnetworks-set-private-ip-google-access.json", "compute.subnetworks", "write", "example"),
     ("compute-firewalls-enable-logs-policy.json", "compute.firewalls", "write", "test-firewall"),
+    ("compute-hardened-images.json", "compute.disks", "write", "test-instance"),
     ("dataproc_createcluster.json", "dataproc.clusters", "write", "test-dataproc-cluster"),
     ("gke-cluster-update.json", "container.projects.locations.clusters", "write", "example-cluster"),
     ("gke-nodepool-set.json", "container.projects.locations.clusters.nodePools", "write", "example-cluster/nodePools/example-pool")
