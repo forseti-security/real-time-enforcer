@@ -1,0 +1,67 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "status": {},
+    "authenticationInfo": {
+      "principalEmail": "user@example.com"
+    },
+    "requestMetadata": {
+      "callerIp": "0:0:0:0:0:0:0:0",
+      "callerSuppliedUserAgent": "unknown"
+    },
+    "serviceName": "servicemanagement.googleapis.com",
+    "methodName": "google.api.servicemanagement.v0.ServiceManager.EnableService",
+    "authorizationInfo": [
+      {
+        "resource": "services/youtubeadsreach.googleapis.com",
+        "permission": "servicemanagement.services.bind",
+        "granted": true
+      },
+      {
+        "resource": "projectnumbers/000000000000/services/-",
+        "permission": "serviceusage.services.enable",
+        "granted": true
+      },
+      {
+        "resource": "projectnumbers/000000000000/services/-",
+        "permission": "serviceusage.services.enable",
+        "granted": true
+      },
+      {
+        "resource": "services/youtubeadsreach.googleapis.com",
+        "permission": "servicemanagement.services.bindAll"
+      },
+      {
+        "resource": "services/youtubeadsreach.googleapis.com/consumers/000000000000",
+        "permission": "serviceconsumermanagement.consumers.enable"
+      }
+    ],
+    "resourceName": "projects/000000000000/services/youtubeadsreach.googleapis.com",
+    "request": {
+      "serviceName": "youtubeadsreach.googleapis.com",
+      "consumerId": "project:my-project",
+      "@type": "type.googleapis.com/google.api.servicemanagement.v0.EnableServiceRequest"
+    },
+    "response": {
+      "@type": "type.googleapis.com/google.api.servicemanagement.v0.EnableServiceResponse"
+    }
+  },
+  "insertId": "0e0000c0z0",
+  "resource": {
+    "type": "audited_resource",
+    "labels": {
+      "method": "google.api.servicemanagement.v0.ServiceManager.EnableService",
+      "project_id": "my-project",
+      "service": "servicemanagement.googleapis.com"
+    }
+  },
+  "timestamp": "0000-00-00T00:00:00.000000000Z",
+  "severity": "NOTICE",
+  "logName": "projects/my-project/logs/cloudaudit.googleapis.com%0Factivity",
+  "operation": {
+    "id": "operations/acf.dbfd000c-a0ff-0000-0d00-0e00f0fc00ad",
+    "producer": "servicemanagement.googleapis.com",
+    "last": true
+  },
+  "receiveTimestamp": "0000-00-00T00:00:00.000000000Z"
+}

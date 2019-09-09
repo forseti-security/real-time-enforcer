@@ -51,11 +51,15 @@ class StackdriverParser():
         replaced when google provides a real-time event delivery solution '''
 
         last = method_name.split('.')[-1].lower()
+        # For batch methods, look for the verb after the word 'batch'
+        if last.startswith('batch'):
+            last = last[5:]
+
         read_prefixes = ('get', 'list')
         if last.startswith(read_prefixes):
             return 'read'
 
-        write_prefixes = ('create', 'update', 'insert', 'patch', 'set', 'debug', 'activate', 'deactivate', 'expand')
+        write_prefixes = ('create', 'update', 'insert', 'patch', 'set', 'debug', 'enable', 'expand')
         if last.startswith(write_prefixes):
             return 'write'
 
@@ -149,12 +153,21 @@ class StackdriverParser():
             resource_location = ''
             add_resource()
 
-        elif res_type == 'audited_resource' and 'ActivateServices' in method_name:
+        elif res_type == 'audited_resource' and 'EnableService' in method_name:
+
             resource_type = 'serviceusage.services'
-            resource_name = prop("resource.labels.service")
             project_id = prop("resource.labels.project_id")
             resource_location = ''
-            add_resource()
+
+            # Check if multiple services were included in the request
+            services = prop('protoPayload.request.serviceIds')
+            if services:
+                for s in services:
+                    resource_name = s
+                    add_resource()
+            else:
+                resource_name = prop("protoPayload.resourceName").split('/')[-1]
+                add_resource()
 
         elif res_type == 'audited_resource' and 'DeactivateServices' in method_name:
             resource_type = 'serviceusage.services'
