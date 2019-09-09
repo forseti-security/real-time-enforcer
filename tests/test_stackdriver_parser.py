@@ -54,7 +54,9 @@ test_single_asset_log_params = [
     ("gke-nodepool-set.json", "container.projects.locations.clusters.nodePools", "write", "example-cluster/nodePools/example-pool"),
 
     ("servicemanagement-enable-service.json", "serviceusage.services", "write", "youtubeadsreach.googleapis.com"),
+    ("servicemanagement-disable-service.json", "serviceusage.services", "write", "youtubereporting.googleapis.com"),
     ("serviceusage-enable.json", "serviceusage.services", "write", "youtubereporting.googleapis.com"),
+    ("serviceusage-disable.json", "serviceusage.services", "write", "zync.googleapis.com"),
 
 ]
 
