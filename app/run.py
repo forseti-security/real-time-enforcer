@@ -136,11 +136,6 @@ def callback(pubsub_message):
 
     for asset_info in assets:
 
-        # Start building our log message
-        log = {}
-        log['log_id'] = log_id
-        log['asset_info'] = asset_info
-
         if asset_info.get('operation_type') != 'write':
             # No changes, no need to check anything
             logger.debug({
@@ -184,13 +179,13 @@ def callback(pubsub_message):
 
         try:
             violations = rpe.violations(resource)
-            log['violation_count'] = len(violations)
-            log['remediation_count'] = 0
-            log['violations'] = {str(v): {'remediated': False} for _, v in violations}
         except Exception as e:
             log_failure('Exception while checking for violations', asset_info,
                         log_id, e)
             continue
+
+        # Prepare log messages
+        logs = mklogs(log_id, asset_info, policies, violations)
 
         if not enforce_policy:
             logger.debug({
@@ -203,7 +198,6 @@ def callback(pubsub_message):
         if enforcement_delay:
             # If the log is old, subtract that from the enforcement delay
             message_age = int(time.time()) - log_timestamp
-            log['message_age'] = message_age
             delay = max(0, enforcement_delay - message_age)
             logger.debug({
                 'log_id': log_id,
@@ -215,10 +209,8 @@ def callback(pubsub_message):
             logger.debug({'log_id': log_id, 'message': 'Executing remediation'})
 
             try:
-                remediation_log = log['violations'][str(violation)]
                 engine.remediate(resource, violation)
-                remediation_log['remediated'] = True
-                log['remediation_count'] += 1
+                logs[violation]['remediated'] = True
 
                 if per_project_logging:
                     project_log = {
@@ -234,7 +226,9 @@ def callback(pubsub_message):
                 log_failure('Execption while attempting to remediate',
                             asset_info, log_id, e)
 
-        logger(log)
+        # submit all of the accumulated logs
+        for policy in logs:
+            logger(logs[policy])
 
     # Finally ack the message after we're done with all of the assets
     pubsub_message.ack()
@@ -249,6 +243,23 @@ def log_failure(log_message, asset_info, log_id, exception):
         'details': str(exception),
         'trace': traceback.format_exc(),
     })
+
+
+def mklogs(log_id, asset_info, policies, violations):
+    logs = {}
+    violated_policies = {y for x, y in violations}
+
+    for policy in policies:
+        logs[policy] = {
+            'log_id': log_id,
+            'policy': policy,
+            'asset_info': asset_info,
+            'violation': policy in violated_policies,
+            'remediated': False  # will be updated after remediation occurs
+        }
+
+    return logs
+
 
 
 if __name__ == "__main__":
