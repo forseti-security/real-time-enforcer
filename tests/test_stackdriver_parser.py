@@ -55,6 +55,8 @@ test_single_asset_log_params = [
 
     ("servicemanagement-enable-service.json", "serviceusage.services", "write", "youtubeadsreach.googleapis.com"),
     ("servicemanagement-disable-service.json", "serviceusage.services", "write", "youtubereporting.googleapis.com"),
+    ("servicemanagement-activate-service.json", "serviceusage.services", "write", "calendar-json.googleapis.com"),
+    ("servicemanagement-deactivate-service.json", "serviceusage.services", "write", "zync.googleapis.com"),
     ("serviceusage-enable.json", "serviceusage.services", "write", "youtubereporting.googleapis.com"),
     ("serviceusage-disable.json", "serviceusage.services", "write", "zync.googleapis.com"),
 

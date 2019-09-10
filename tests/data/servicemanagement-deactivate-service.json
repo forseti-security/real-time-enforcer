@@ -1,0 +1,66 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "status": {},
+    "authenticationInfo": {
+      "principalEmail": "user@example.com"
+    },
+    "requestMetadata": {
+      "callerIp": "0:0:0:0:0:0:0:0",
+      "callerSuppliedUserAgent": "unknown"
+    },
+    "serviceName": "servicemanagement.googleapis.com",
+    "methodName": "google.api.servicemanagement.v0.ServiceManager.DeactivateServices",
+    "authorizationInfo": [
+      {
+        "resource": "projectnumbers/000000000000/services/-",
+        "permission": "serviceusage.services.disable",
+        "granted": true
+      },
+      {
+        "resource": "services/zync.googleapis.com",
+        "permission": "servicemanagement.services.bindAll"
+      },
+      {
+        "resource": "services/zync.googleapis.com/consumers/000000000000",
+        "permission": "serviceconsumermanagement.consumers.disable"
+      }
+    ],
+    "resourceName": "projects/000000000000/services/[zync.googleapis.com]",
+    "request": {
+      "consumerProjectId": "my-project",
+      "serviceNames": [
+        "zync.googleapis.com"
+      ],
+      "errorWhenDeactivatingDependentServices": true,
+      "@type": "type.googleapis.com/google.api.servicemanagement.v0.DeactivateServicesRequest"
+    },
+    "response": {
+      "settings": [
+        {
+          "serviceName": "zync.googleapis.com",
+          "usageSettings": {}
+        }
+      ],
+      "@type": "type.googleapis.com/google.api.servicemanagement.v0.DeactivateServicesResponse"
+    }
+  },
+  "insertId": "-lwk00yc0qk",
+  "resource": {
+    "type": "audited_resource",
+    "labels": {
+      "service": "servicemanagement.googleapis.com",
+      "method": "google.api.servicemanagement.v0.ServiceManager.DeactivateServices",
+      "project_id": "my-project"
+    }
+  },
+  "timestamp": "0000-00-00T00:00:00.000000000Z",
+  "severity": "NOTICE",
+  "logName": "projects/my-project/logs/cloudaudit.googleapis.com%0Factivity",
+  "operation": {
+    "id": "operations/acf.00dff0e0-ae0e-00fd-a0b0-cd00bb00b00d",
+    "producer": "servicemanagement.googleapis.com",
+    "last": true
+  },
+  "receiveTimestamp": "0000-00-00T00:00:00.000000000Z"
+}
