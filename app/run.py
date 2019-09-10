@@ -170,6 +170,18 @@ def callback(pubsub_message):
             'message': 'Analyzing for violations'
         })
 
+        # Fetch a list of policies and then violations.  The policy
+        # list is needed to log data about evaluated policies that are
+        # not violated by the current asset.
+
+        try:
+            policies = rpe.policies(resource)
+        except Exception as e:
+            log_failure('Exception while retrieving policies', asset_info,
+                        log_id, e)
+            pubsub_message.ack()
+            continue
+
         try:
             violations = rpe.violations(resource)
             log['violation_count'] = len(violations)
