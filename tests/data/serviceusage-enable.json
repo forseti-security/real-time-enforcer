@@ -1,0 +1,61 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "status": {},
+    "authenticationInfo": {
+      "principalEmail": "user@example.com"
+    },
+    "requestMetadata": {
+      "callerIp": "0:0:0:0:0:0:0:0",
+      "callerSuppliedUserAgent": "unknown"
+    },
+    "serviceName": "serviceusage.googleapis.com",
+    "methodName": "google.api.serviceusage.v0.ServiceUsage.EnableService",
+    "authorizationInfo": [
+      {
+        "resource": "projectnumbers/000000000000/services/youtubereporting.googleapis.com",
+        "permission": "serviceusage.services.enable",
+        "granted": true
+      },
+      {
+        "resource": "services/youtubereporting.googleapis.com",
+        "permission": "servicemanagement.services.bind",
+        "granted": true
+      }
+    ],
+    "resourceName": "projects/my-project/services/youtubereporting.googleapis.com",
+    "request": {
+      "name": "projects/my-project/services/youtubereporting.googleapis.com",
+      "@type": "type.googleapis.com/google.api.serviceusage.v0.EnableServiceRequest"
+    },
+    "response": {
+      "service": {
+        "name": "projects/000000000000/services/youtubereporting.googleapis.com",
+        "config": {
+          "name": "youtubereporting.googleapis.com",
+          "title": "YouTube Reporting API"
+        },
+        "state": "ENABLED"
+      },
+      "@type": "type.googleapis.com/google.api.serviceusage.v0.EnableServiceResponse"
+    }
+  },
+  "insertId": "-t0cikkc0lq",
+  "resource": {
+    "type": "audited_resource",
+    "labels": {
+      "service": "serviceusage.googleapis.com",
+      "method": "google.api.serviceusage.v0.ServiceUsage.EnableService",
+      "project_id": "my-project"
+    }
+  },
+  "timestamp": "0000-00-00T00:00:00.000000000Z",
+  "severity": "NOTICE",
+  "logName": "projects/my-project/logs/cloudaudit.googleapis.com%0Factivity",
+  "operation": {
+    "id": "operations/acf.b0ee00e0-000c-0f00-0d0b-ae0dafb0fb00",
+    "producer": "serviceusage.googleapis.com",
+    "last": true
+  },
+  "receiveTimestamp": "0000-00-00T00:00:00.000000000Z"
+}

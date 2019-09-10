@@ -1,0 +1,74 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "authenticationInfo": {
+      "principalEmail": "user@example.com"
+    },
+    "requestMetadata": {
+      "callerIp": "00.00.000.000",
+      "callerSuppliedUserAgent": "Mozilla/0.0 (Macintosh; Intel Mac OS X 00.00; rv:00.0) Gecko/00000000 Firefox/00.0,gzip(gfe)"
+    },
+    "serviceName": "serviceusage.googleapis.com",
+    "methodName": "google.api.serviceusage.v0.ServiceUsage.BatchEnableServices",
+    "authorizationInfo": [
+      {
+        "resource": "projectnumbers/000000000000/services/toolresults.googleapis.com",
+        "permission": "serviceusage.services.enable",
+        "granted": true
+      },
+      {
+        "resource": "services/toolresults.googleapis.com",
+        "permission": "servicemanagement.services.bind",
+        "granted": true
+      },
+      {
+        "resource": "projectnumbers/000000000000/services/travelpartner.googleapis.com",
+        "permission": "serviceusage.services.enable",
+        "granted": true
+      },
+      {
+        "resource": "services/travelpartner.googleapis.com",
+        "permission": "servicemanagement.services.bind",
+        "granted": true
+      },
+      {
+        "resource": "projectnumbers/000000000000/services/tpu.googleapis.com",
+        "permission": "serviceusage.services.enable",
+        "granted": true
+      },
+      {
+        "resource": "services/tpu.googleapis.com",
+        "permission": "servicemanagement.services.bind",
+        "granted": true
+      }
+    ],
+    "resourceName": "projects/my-project/services",
+    "request": {
+      "@type": "type.googleapis.com/google.api.serviceusage.v0.BatchEnableServicesRequest",
+      "parent": "projects/my-project",
+      "serviceIds": [
+        "toolresults.googleapis.com",
+        "travelpartner.googleapis.com",
+        "tpu.googleapis.com"
+      ]
+    }
+  },
+  "insertId": "0pbj0omc0al",
+  "resource": {
+    "type": "audited_resource",
+    "labels": {
+      "service": "serviceusage.googleapis.com",
+      "method": "google.api.serviceusage.v0.ServiceUsage.BatchEnableServices",
+      "project_id": "my-project"
+    }
+  },
+  "timestamp": "0000-00-00T00:00:00.000Z",
+  "severity": "NOTICE",
+  "logName": "projects/my-project/logs/cloudaudit.googleapis.com%0Factivity",
+  "operation": {
+    "id": "operations/acf.000000f0-cbf0-00b0-0e00-d000b000b00b",
+    "producer": "serviceusage.googleapis.com",
+    "first": true
+  },
+  "receiveTimestamp": "0000-00-00T00:00:00.000000000Z"
+}

@@ -1,0 +1,56 @@
+{
+ "protoPayload": {
+   "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+   "status": {},
+   "authenticationInfo": {
+     "principalEmail": "user@example.com"
+   },
+   "requestMetadata": {
+     "callerIp": "0:0:0:0:0:0:0:0",
+     "callerSuppliedUserAgent": "unknown"
+   },
+   "serviceName": "serviceusage.googleapis.com",
+   "methodName": "google.api.serviceusage.v0.ServiceUsage.DisableService",
+   "authorizationInfo": [
+     {
+       "resource": "projectnumbers/000000000000/services/zync.googleapis.com",
+       "permission": "serviceusage.services.disable",
+       "granted": true
+     }
+   ],
+   "resourceName": "projects/my-project/services/zync.googleapis.com",
+   "request": {
+     "name": "projects/my-project/services/zync.googleapis.com",
+     "@type": "type.googleapis.com/google.api.serviceusage.v0.DisableServiceRequest"
+   },
+   "response": {
+     "service": {
+       "name": "projects/000000000000/services/zync.googleapis.com",
+       "config": {
+         "name": "zync.googleapis.com",
+         "title": "Zync Render API"
+       },
+       "state": "DISABLED"
+     },
+     "@type": "type.googleapis.com/google.api.serviceusage.v0.DisableServiceResponse"
+   }
+ },
+ "insertId": "ftwjblc00c",
+ "resource": {
+   "type": "audited_resource",
+   "labels": {
+     "method": "google.api.serviceusage.v0.ServiceUsage.DisableService",
+     "project_id": "my-project",
+     "service": "serviceusage.googleapis.com"
+   }
+ },
+ "timestamp": "0000-00-00T00:00:00.000000000Z",
+ "severity": "NOTICE",
+ "logName": "projects/my-project/logs/cloudaudit.googleapis.com%0Factivity",
+ "operation": {
+   "id": "operations/acf.00000eb0-c0da-000e-b000-00eca0000fc0",
+   "producer": "serviceusage.googleapis.com",
+   "last": true
+ },
+ "receiveTimestamp": "0000-00-00T00:00:00.000000000Z"
+ }

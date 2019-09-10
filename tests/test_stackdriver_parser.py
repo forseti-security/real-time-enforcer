@@ -51,7 +51,19 @@ test_single_asset_log_params = [
     ("compute-hardened-images.json", "compute.disks", "write", "test-instance"),
     ("dataproc_createcluster.json", "dataproc.clusters", "write", "test-dataproc-cluster"),
     ("gke-cluster-update.json", "container.projects.locations.clusters", "write", "example-cluster"),
-    ("gke-nodepool-set.json", "container.projects.locations.clusters.nodePools", "write", "example-cluster/nodePools/example-pool")
+    ("gke-nodepool-set.json", "container.projects.locations.clusters.nodePools", "write", "example-cluster/nodePools/example-pool"),
+
+    ("servicemanagement-enable-service.json", "serviceusage.services", "write", "youtubeadsreach.googleapis.com"),
+    ("servicemanagement-disable-service.json", "serviceusage.services", "write", "youtubereporting.googleapis.com"),
+    ("servicemanagement-activate-service.json", "serviceusage.services", "write", "calendar-json.googleapis.com"),
+    ("servicemanagement-deactivate-service.json", "serviceusage.services", "write", "zync.googleapis.com"),
+    ("serviceusage-enable.json", "serviceusage.services", "write", "youtubereporting.googleapis.com"),
+    ("serviceusage-disable.json", "serviceusage.services", "write", "zync.googleapis.com"),
+
+]
+
+test_log_resource_count_params = [
+    ("serviceusage-batchenable.json", "serviceusage.services", "write", 3)
 ]
 
 @pytest.mark.parametrize(
@@ -68,3 +80,17 @@ def test_single_asset_log_messages(filename, expected_resource_type, expected_op
     assert asset_info['resource_type'] == expected_resource_type
     assert asset_info['operation_type'] == expected_operation_type
     assert asset_info['resource_name'] == expected_resource_name
+
+@pytest.mark.parametrize(
+    "filename,expected_resource_type,expected_operation_type,expected_resource_count",
+    test_log_resource_count_params
+)
+def test_log_resource_count(filename, expected_resource_type, expected_operation_type, expected_resource_count):
+    log_message = get_test_data(filename)
+
+    assets = StackdriverParser.get_assets(log_message)
+    assert len(assets) == expected_resource_count
+    asset_info = assets[0]
+
+    assert asset_info['resource_type'] == expected_resource_type
+    assert asset_info['operation_type'] == expected_operation_type
