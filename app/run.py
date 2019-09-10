@@ -161,10 +161,7 @@ def callback(pubsub_message):
                 )
             resource = Resource.factory('gcp', asset_info, credentials=project_creds)
         except Exception as e:
-            log['message'] = 'Internal failure in rpe-lib'
-            log['details'] = str(e)
-            log['trace'] = traceback.format_exc()
-            logger(log)
+            log_failure('Internal failure in rpe-lib', asset_info, log_id, e)
             pubsub_message.ack()
             continue
 
@@ -179,10 +176,8 @@ def callback(pubsub_message):
             log['remediation_count'] = 0
             log['violations'] = {str(v): {'remediated': False} for _, v in violations}
         except Exception as e:
-            log['message'] = 'Execption while checking for violations'
-            log['details'] = str(e)
-            log['trace'] = traceback.format_exc()
-            logger(log)
+            log_failure('Exception while checking for violations', asset_info,
+                        log_id, e)
             continue
 
         if not enforce_policy:
@@ -224,14 +219,24 @@ def callback(pubsub_message):
             except Exception as e:
                 # Catch any other exceptions so we can acknowledge the message.
                 # Otherwise they start to fill up the buffer of unacknowledged messages
-                remediation_log['message'] = 'Execption while checking for violations'
-                remediation_log['details'] = str(e)
-                remediation_log['trace'] = traceback.format_exc()
+                log_failure('Execption while attempting to remediate',
+                            asset_info, log_id, e)
 
         logger(log)
 
     # Finally ack the message after we're done with all of the assets
     pubsub_message.ack()
+
+
+def log_failure(log_message, asset_info, log_id, exception):
+    '''convience function to log details during a failure'''
+    logger({
+        'log_id': log_id,
+        'asset_info': asset_info,
+        'message': log_message,
+        'details': str(exception),
+        'trace': traceback.format_exc(),
+    })
 
 
 if __name__ == "__main__":
