@@ -227,7 +227,6 @@ def callback(pubsub_message):
                 remediation_log['message'] = 'Execption while checking for violations'
                 remediation_log['details'] = str(e)
                 remediation_log['trace'] = traceback.format_exc()
-                logger(log)
 
         logger(log)
 
