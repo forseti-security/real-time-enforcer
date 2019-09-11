@@ -29,12 +29,12 @@ class Logger:
             client = google.cloud.logging.Client(project=project_id, credentials=credentials)
             self.sd_logger = client.logger(log_name)
 
-    def __call__(self, data):
+    def __call__(self, data, severity='DEFAULT'):
         if self.stackdriver:
             if isinstance(data, dict):
-                self.sd_logger.log_struct(data)
+                self.sd_logger.log_struct(data, severity=severity)
             else:
-                self.sd_logger.log_text(data)
+                self.sd_logger.log_text(data, severity=severity)
 
         else:
             print(data)
@@ -42,4 +42,4 @@ class Logger:
     # Separate function for debug logs
     def debug(self, data):
         if self.debugging:
-            self(data)
+            self(data, severity='DEBUG')
