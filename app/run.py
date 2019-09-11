@@ -205,18 +205,18 @@ def callback(pubsub_message):
             })
             time.sleep(delay)
 
-        for (engine, violation) in violations:
+        for (engine, violated_policy) in violations:
             logger.debug({'log_id': log_id, 'message': 'Executing remediation'})
 
             try:
-                engine.remediate(resource, violation)
-                logs[violation]['remediated'] = True
+                engine.remediate(resource, violated_policy)
+                logs[violated_policy]['remediated'] = True
 
                 if per_project_logging:
                     project_log = {
                         'event': 'remediation',
                         'trigger_event': asset_info,
-                        'policy': str(violation)
+                        'policy': violated_policy,
                     }
                     project_logger(project_log)
 
