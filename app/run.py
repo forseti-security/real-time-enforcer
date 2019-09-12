@@ -160,6 +160,8 @@ def callback(pubsub_message):
             pubsub_message.ack()
             continue
 
+        fill_asset_info(asset_info, resource)
+
         logger.debug({
             'log_id': log_id,
             'message': 'Analyzing for violations'
@@ -211,6 +213,7 @@ def callback(pubsub_message):
             try:
                 engine.remediate(resource, violated_policy)
                 logs[violated_policy]['remediated'] = True
+                logs[violated_policy]['remediated_at'] = int(time.time())
 
                 if per_project_logging:
                     project_log = {
@@ -248,6 +251,7 @@ def log_failure(log_message, asset_info, log_id, exception):
 def mklogs(log_id, asset_info, policies, violations):
     logs = {}
     violated_policies = {y for x, y in violations}
+    evaluated_at = int(time.time())
 
     for policy in policies:
         logs[policy] = {
@@ -255,11 +259,30 @@ def mklogs(log_id, asset_info, policies, violations):
             'policy': policy,
             'asset_info': asset_info,
             'violation': policy in violated_policies,
-            'remediated': False  # will be updated after remediation occurs
+            'evaluated_at': evaluated_at,
+            'remediated': False,  # will be updated after remediation occurs
         }
 
     return logs
 
+
+def fill_asset_info(asset_info, resource):
+    '''fills in the asset_info dict with more details about the resource
+
+    This information is mostly used to produce more useful log messages.'''
+    asset_info['org_id'] = find_org_id(resource)
+    asset_info['full_resource_name'] = resource.full_resource_name()
+    asset_info['cai_type'] = resource.cai_type
+
+
+def find_org_id(resource):
+    '''Returns the org id, or None if it doesn't exist or can't be found'''
+    if resource.ancestry is not None:
+        for a in resource.ancestry['ancestor']:
+            if a['resourceId']['type'] == 'organization':
+                return 'organizations/%s' % a['resourceId']['id']
+
+    return None
 
 
 if __name__ == "__main__":
