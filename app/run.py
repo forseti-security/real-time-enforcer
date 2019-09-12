@@ -187,7 +187,8 @@ def callback(pubsub_message):
             continue
 
         # Prepare log messages
-        logs = mklogs(log_id, asset_info, policies, violations)
+        message_age = int(time.time()) - log_timestamp
+        logs = mklogs(log_id, asset_info, policies, violations, message_age)
 
         if not enforce_policy:
             logger.debug({
@@ -199,7 +200,6 @@ def callback(pubsub_message):
 
         if enforcement_delay:
             # If the log is old, subtract that from the enforcement delay
-            message_age = int(time.time()) - log_timestamp
             delay = max(0, enforcement_delay - message_age)
             logger.debug({
                 'log_id': log_id,
@@ -248,7 +248,7 @@ def log_failure(log_message, asset_info, log_id, exception):
     })
 
 
-def mklogs(log_id, asset_info, policies, violations):
+def mklogs(log_id, asset_info, policies, violations, message_age):
     logs = {}
     violated_policies = {y for x, y in violations}
     evaluated_at = int(time.time())
@@ -261,6 +261,7 @@ def mklogs(log_id, asset_info, policies, violations):
             'violation': policy in violated_policies,
             'evaluated_at': evaluated_at,
             'remediated': False,  # will be updated after remediation occurs
+            'message_age': message_age,
         }
 
     return logs
