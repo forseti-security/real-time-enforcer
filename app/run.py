@@ -136,11 +136,6 @@ def callback(pubsub_message):
 
     for asset_info in assets:
 
-        # Start building our log message
-        log = {}
-        log['log_id'] = log_id
-        log['asset_info'] = asset_info
-
         if asset_info.get('operation_type') != 'write':
             # No changes, no need to check anything
             logger.debug({
@@ -161,10 +156,7 @@ def callback(pubsub_message):
                 )
             resource = Resource.factory('gcp', asset_info, credentials=project_creds)
         except Exception as e:
-            log['message'] = 'Internal failure in rpe-lib'
-            log['details'] = str(e)
-            log['trace'] = traceback.format_exc()
-            logger(log)
+            log_failure('Internal failure in rpe-lib', asset_info, log_id, e)
             pubsub_message.ack()
             continue
 
@@ -173,17 +165,27 @@ def callback(pubsub_message):
             'message': 'Analyzing for violations'
         })
 
+        # Fetch a list of policies and then violations.  The policy
+        # list is needed to log data about evaluated policies that are
+        # not violated by the current asset.
+
+        try:
+            policies = rpe.policies(resource)
+        except Exception as e:
+            log_failure('Exception while retrieving policies', asset_info,
+                        log_id, e)
+            pubsub_message.ack()
+            continue
+
         try:
             violations = rpe.violations(resource)
-            log['violation_count'] = len(violations)
-            log['remediation_count'] = 0
-            log['violations'] = {str(v): {'remediated': False} for _, v in violations}
         except Exception as e:
-            log['message'] = 'Execption while checking for violations'
-            log['details'] = str(e)
-            log['trace'] = traceback.format_exc()
-            logger(log)
+            log_failure('Exception while checking for violations', asset_info,
+                        log_id, e)
             continue
+
+        # Prepare log messages
+        logs = mklogs(log_id, asset_info, policies, violations)
 
         if not enforce_policy:
             logger.debug({
@@ -196,7 +198,6 @@ def callback(pubsub_message):
         if enforcement_delay:
             # If the log is old, subtract that from the enforcement delay
             message_age = int(time.time()) - log_timestamp
-            log['message_age'] = message_age
             delay = max(0, enforcement_delay - message_age)
             logger.debug({
                 'log_id': log_id,
@@ -204,34 +205,61 @@ def callback(pubsub_message):
             })
             time.sleep(delay)
 
-        for (engine, violation) in violations:
+        for (engine, violated_policy) in violations:
             logger.debug({'log_id': log_id, 'message': 'Executing remediation'})
 
             try:
-                remediation_log = log['violations'][str(violation)]
-                engine.remediate(resource, violation)
-                remediation_log['remediated'] = True
-                log['remediation_count'] += 1
+                engine.remediate(resource, violated_policy)
+                logs[violated_policy]['remediated'] = True
 
                 if per_project_logging:
                     project_log = {
                         'event': 'remediation',
                         'trigger_event': asset_info,
-                        'policy': str(violation)
+                        'policy': violated_policy,
                     }
                     project_logger(project_log)
 
             except Exception as e:
                 # Catch any other exceptions so we can acknowledge the message.
                 # Otherwise they start to fill up the buffer of unacknowledged messages
-                remediation_log['message'] = 'Execption while checking for violations'
-                remediation_log['details'] = str(e)
-                remediation_log['trace'] = traceback.format_exc()
+                log_failure('Execption while attempting to remediate',
+                            asset_info, log_id, e)
 
-        logger(log)
+        # submit all of the accumulated logs
+        for policy in logs:
+            logger(logs[policy])
 
     # Finally ack the message after we're done with all of the assets
     pubsub_message.ack()
+
+
+def log_failure(log_message, asset_info, log_id, exception):
+    '''convience function to log details during a failure'''
+    logger({
+        'log_id': log_id,
+        'asset_info': asset_info,
+        'message': log_message,
+        'details': str(exception),
+        'trace': traceback.format_exc(),
+    })
+
+
+def mklogs(log_id, asset_info, policies, violations):
+    logs = {}
+    violated_policies = {y for x, y in violations}
+
+    for policy in policies:
+        logs[policy] = {
+            'log_id': log_id,
+            'policy': policy,
+            'asset_info': asset_info,
+            'violation': policy in violated_policies,
+            'remediated': False  # will be updated after remediation occurs
+        }
+
+    return logs
+
 
 
 if __name__ == "__main__":
