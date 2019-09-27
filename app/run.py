@@ -160,7 +160,12 @@ def callback(pubsub_message):
             pubsub_message.ack()
             continue
 
-        fill_asset_info(asset_info, resource)
+        try:
+            fill_asset_info(asset_info, resource)
+        except Exception as e:
+            # We can still proceed without the additional data, but we should log that it happened
+            log_failure('Failed to load additional asset metadata', asset_info, log_id, e)
+
 
         logger.debug({
             'log_id': log_id,
