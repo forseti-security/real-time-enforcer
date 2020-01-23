@@ -154,7 +154,13 @@ def callback(pubsub_message):
                     asset_info['project_id'],
                     project_creds
                 )
-            resource = Resource.factory('gcp', asset_info, credentials=project_creds)
+            resource = Resource.factory(
+                'gcp',
+                client_kwargs={
+                    'credentials': project_creds,
+                },
+                **asset_info
+            )
         except Exception as e:
             log_failure('Internal failure in rpe-lib', asset_info, log_id, e)
             pubsub_message.ack()

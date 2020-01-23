@@ -18,6 +18,12 @@ import os
 import pytest
 
 from app.lib.stackdriver import StackdriverParser
+from google.oauth2.credentials import Credentials
+from rpe.resources import Resource
+
+test_google_args = {
+    'credentials': Credentials(token='bogus'),
+}
 
 
 def get_test_data(filename):
@@ -34,7 +40,7 @@ def get_test_data(filename):
 # parameters for testing logs that should return a single asset
 test_single_asset_log_params = [
     # filename, expected_resource_type, expected_operation_type, expected_resource_name
-    ("app-engine-debug.json", "apps.services.versions.instances", "write", "apps/my_project/services/default/versions/test-instance/instances/aef-default-test-instance"),
+    ("app-engine-debug.json", "apps.services.versions.instances", "write", "aef-default-test-instance"),
     ("bq-ds-set-iam-policy.json", "bigquery.datasets", "write", "wooo"),
     ("bigtable-set-iam-policy.json", "bigtableadmin.projects.instances.iam", "write", "example-instance"),
     ("pubsub-subscription-set-iam-policy.json", "pubsub.projects.subscriptions.iam", "write", "test-subscription"),
@@ -51,7 +57,7 @@ test_single_asset_log_params = [
     ("compute-hardened-images.json", "compute.disks", "write", "test-instance"),
     ("dataproc_createcluster.json", "dataproc.clusters", "write", "test-dataproc-cluster"),
     ("gke-cluster-update.json", "container.projects.locations.clusters", "write", "example-cluster"),
-    ("gke-nodepool-set.json", "container.projects.locations.clusters.nodePools", "write", "example-cluster/nodePools/example-pool"),
+    ("gke-nodepool-set.json", "container.projects.locations.clusters.nodePools", "write", "example-pool"),
 
     ("servicemanagement-enable-service.json", "serviceusage.services", "write", "youtubeadsreach.googleapis.com"),
     ("servicemanagement-disable-service.json", "serviceusage.services", "write", "youtubereporting.googleapis.com"),
@@ -79,7 +85,19 @@ def test_single_asset_log_messages(filename, expected_resource_type, expected_op
 
     assert asset_info['resource_type'] == expected_resource_type
     assert asset_info['operation_type'] == expected_operation_type
-    assert asset_info['resource_name'] == expected_resource_name
+    assert asset_info['name'] == expected_resource_name
+
+@pytest.mark.parametrize(
+    "filename,expected_resource_type,expected_operation_type,expected_resource_name",
+    test_single_asset_log_params
+)
+def test_rpe_from_stackdriver_data(filename, expected_resource_type, expected_operation_type, expected_resource_name):
+    log_message = get_test_data(filename)
+
+    assets = StackdriverParser.get_assets(log_message)
+    asset_info = assets[0]
+
+    Resource.factory('gcp', client_kwargs=test_google_args, **asset_info)
 
 @pytest.mark.parametrize(
     "filename,expected_resource_type,expected_operation_type,expected_resource_count",
