@@ -81,188 +81,227 @@ class StackdriverParser():
             return jmespath.search(exp, message)
 
         def add_resource():
-            resources.append({
-                'resource_type': resource_type,
-                'resource_name': resource_name,
-                'resource_location': resource_location,
-                'project_id': project_id,
+            r = resource_data.copy()
+            r.update({
                 'method_name': method_name,
                 'operation_type': operation_type
             })
+            resources.append(r)
 
         method_name = prop('protoPayload.methodName')
         operation_type = cls._operation_type(res_type, method_name)
 
         if res_type == 'cloudsql_database' and method_name.startswith('cloudsql.instances'):
-            resource_type = 'sqladmin.instances'
 
-            # CloudSQL logs are inconsistent. See https://issuetracker.google.com/issues/137629452
-            resource_name = (prop('resource.labels.database_id').split(':')[-1] or
-                            prop('protoPayload.request.body.name') or
-                            prop('protoPayload.request.resource.instanceName.instanceId'))
+            resource_data = {
+                'resource_type': 'sqladmin.instances',
 
-            resource_location = prop('resource.labels.region')
-            project_id = prop('resource.labels.project_id')
+                # CloudSQL logs are inconsistent. See https://issuetracker.google.com/issues/137629452
+                'name': (prop('resource.labels.database_id').split(':')[-1] or
+                        prop('protoPayload.request.body.name') or
+                        prop('protoPayload.request.resource.instanceName.instanceId')),
+
+                'location': prop('resource.labels.region'),
+                'project_id': prop('resource.labels.project_id'),
+            }
             add_resource()
 
         elif res_type == "gcs_bucket" and method_name.startswith('storage.buckets'):
-            resource_type = 'storage.buckets'
-            resource_name = prop("resource.labels.bucket_name")
-            resource_location = prop("resource.labels.location")
-            project_id = prop("resource.labels.project_id")
+            resource_data = {
+                'resource_type': 'storage.buckets',
+                'name': prop("resource.labels.bucket_name"),
+                'location': prop("resource.labels.location"),
+                'project_id': prop("resource.labels.project_id"),
+            }
             add_resource()
 
             # If ACLs are updated, they are scanned by the IAM scanner, but
             # they come through as a bucket update, we need to return both resource types
-            resource_type = 'storage.buckets.iam'
+            resource_data['resource_type'] = 'storage.buckets.iam'
             add_resource()
 
         elif res_type == "gcs_bucket" and method_name == 'storage.setIamPermissions':
-            resource_type = 'storage.buckets.iam'
-            resource_name = prop("resource.labels.bucket_name")
-            resource_location = prop("resource.labels.location")
-            project_id = prop("resource.labels.project_id")
+            resource_data = {
+                'resource_type': 'storage.buckets.iam',
+                'name': prop("resource.labels.bucket_name"),
+                'location': prop("resource.labels.location"),
+                'project_id': prop("resource.labels.project_id"),
+            }
             add_resource()
 
         elif res_type == "bigquery_dataset":
             if "DatasetService" in method_name or 'SetIamPolicy' in method_name:
-                resource_type = 'bigquery.datasets'
-                resource_name = prop("resource.labels.dataset_id")
-                resource_location = ''
-                project_id = prop("resource.labels.project_id")
+                resource_data = {
+                    'resource_type': 'bigquery.datasets',
+                    'name': prop("resource.labels.dataset_id"),
+                    'project_id': prop("resource.labels.project_id"),
+                }
                 add_resource()
 
         elif res_type == "project" and method_name == 'SetIamPolicy':
-            resource_type = 'cloudresourcemanager.projects.iam'
-            resource_name = prop("resource.labels.project_id")
-            resource_location = ''
-            project_id = prop("resource.labels.project_id")
+            resource_data = {
+                'resource_type': 'cloudresourcemanager.projects.iam',
+                'name': prop("resource.labels.project_id"),
+                'project_id': prop("resource.labels.project_id"),
+            }
             add_resource()
 
         elif res_type == "pubsub_subscription" and 'SetIamPolicy' in method_name:
-            resource_type = 'pubsub.projects.subscriptions.iam'
-            resource_name = prop("resource.labels.subscription_id").split('/')[-1]
-            project_id = prop("resource.labels.project_id")
-            resource_location = ''
+            resource_data = {
+                'resource_type': 'pubsub.projects.subscriptions.iam',
+                'name': prop("resource.labels.subscription_id").split('/')[-1],
+                'project_id': prop("resource.labels.project_id"),
+            }
             add_resource()
 
         elif res_type == "pubsub_topic" and 'SetIamPolicy' in method_name:
-            resource_type = 'pubsub.projects.topics.iam'
-            resource_name = prop("resource.labels.topic_id").split('/')[-1]
-            project_id = prop("resource.labels.project_id")
-            resource_location = ''
+            resource_data = {
+                'resource_type': 'pubsub.projects.topics.iam',
+                'name': prop("resource.labels.topic_id").split('/')[-1],
+                'project_id': prop("resource.labels.project_id"),
+            }
             add_resource()
 
         elif res_type == 'audited_resource' and ('EnableService' in method_name or 'DisableService' in method_name or 'ctivateService' in method_name):
 
-            resource_type = 'serviceusage.services'
-            project_id = prop("resource.labels.project_id")
-            resource_location = ''
+            resource_data = {
+                'resource_type': 'serviceusage.services',
+                'project_id': prop("resource.labels.project_id"),
+            }
 
             # Check if multiple services were included in the request
             # The Google Cloud Console generates (De)activate calls that logs a different format so we check both known formats
             services = prop('protoPayload.request.serviceIds') or prop('protoPayload.request.serviceNames')
             if services:
                 for s in services:
-                    resource_name = s
+                    resource_data['name'] = s
                     add_resource()
             else:
-                resource_name = prop("protoPayload.resourceName").split('/')[-1]
+                resource_data['name'] = prop("protoPayload.resourceName").split('/')[-1]
                 add_resource()
 
         elif res_type == 'audited_resource' and 'DeactivateServices' in method_name:
-            resource_type = 'serviceusage.services'
-            resource_name = prop("resource.labels.service")
-            project_id = prop("resource.labels.project_id")
-            resource_location = ''
+            resource_data = {
+                'resource_type': 'serviceusage.services',
+                'name': prop("resource.labels.service"),
+                'project_id': prop("resource.labels.project_id"),
+            }
             add_resource()
 
         elif res_type == "gce_subnetwork":
-            resource_type = 'compute.subnetworks'
-            resource_name = prop("resource.labels.subnetwork_name")
-            project_id = prop("resource.labels.project_id")
-            resource_location = prop("resource.labels.location")
+            resource_data = {
+                'resource_type': 'compute.subnetworks',
+                'name': prop("resource.labels.subnetwork_name"),
+                'project_id': prop("resource.labels.project_id"),
+                'location': prop("resource.labels.location"),
+            }
             add_resource()
 
         elif res_type == "gce_firewall_rule":
-            resource_type = 'compute.firewalls'
-            resource_name = prop("protoPayload.resourceName").split('/')[-1]
-            project_id = prop("resource.labels.project_id")
-            resource_location = ''
+            resource_data = {
+                'resource_type': 'compute.firewalls',
+                'name': prop("protoPayload.resourceName").split('/')[-1],
+                'project_id': prop("resource.labels.project_id"),
+            }
             add_resource()
 
         elif res_type == "gae_app" and 'DebugInstance' in method_name:
-            resource_type = 'apps.services.versions.instances'
-            resource_name = prop("protoPayload.resourceName")
-            resource_location = ''
-            project_id = prop("resource.labels.project_id")
+            instance_data = prop("protoPayload.resourceName").split('/')
+            resource_data = {
+                'resource_type': 'apps.services.versions.instances',
+                'name': instance_data[-1],
+                'app': instance_data[1],
+                'service': instance_data[3],
+                'version': instance_data[5],
+            }
             add_resource()
 
         elif res_type == "gce_instance":
             #gce instance return us result images whitch doesn't contains the source_image part.
             #so we check source_image through the disk resource
-            resource_type = 'compute.disks'
             disk_name = prop("protoPayload.request.disks[?boot].diskName | [0]")
-            resource_name = disk_name or prop("protoPayload.resourceName").split('/')[-1]
-            resource_location = prop("resource.labels.zone")
-            project_id = prop("resource.labels.project_id")
+
+            resource_data = {
+                'resource_type': 'compute.disks',
+                'name': disk_name or prop("protoPayload.resourceName").split('/')[-1],
+                'location': prop("resource.labels.zone"),
+                'project_id': prop("resource.labels.project_id"),
+            }
             add_resource()
 
         elif res_type == "cloud_function":
-            resource_name = prop("resource.labels.function_name")
-            project_id = prop("resource.labels.project_id")
-            resource_location = prop("resource.labels.region")
+            resource_data = {
+                'name': prop("resource.labels.function_name"),
+                'project_id': prop("resource.labels.project_id"),
+                'location': prop("resource.labels.region"),
+                'resource_type': 'cloudfunctions.projects.locations.functions',
+            }
+
             if 'SetIamPolicy' in method_name:
-                resource_type = 'cloudfunctions.projects.locations.functions.iam'
+                resource_data['resource_type'] = 'cloudfunctions.projects.locations.functions.iam'
             else:
-                resource_type = 'cloudfunctions.projects.locations.functions'
+                resource_data['resource_type'] = 'cloudfunctions.projects.locations.functions'
                 add_resource()
-                resource_type = 'cloudfunctions.projects.locations.functions.iam'
+                resource_data['resource_type'] = 'cloudfunctions.projects.locations.functions.iam'
             add_resource()
 
+
         elif res_type == "cloud_dataproc_cluster":
-            resource_type = 'dataproc.clusters'
-            project_id = prop("resource.labels.project_id")
-            resource_name = prop("resource.labels.cluster_name")
-            resource_location = prop("resource.labels.region")
+            resource_data = {
+                'resource_type': 'dataproc.clusters',
+                'project_id': prop("resource.labels.project_id"),
+                'name': prop("resource.labels.cluster_name"),
+                'location': prop("resource.labels.region"),
+            }
             add_resource()
 
         elif res_type == "gke_cluster":
-            resource_type = 'container.projects.locations.clusters'
-            resource_name = prop("resource.labels.cluster_name")
-            project_id = prop("resource.labels.project_id")
-            resource_location = prop("resource.labels.location")
+            resource_data = {
+                'resource_type': 'container.projects.locations.clusters',
+                'name': prop("resource.labels.cluster_name"),
+                'project_id': prop("resource.labels.project_id"),
+                'location': prop("resource.labels.location"),
+            }
             add_resource()
+
             # add node pool resources for eval on new cluster creation
             if "create" in method_name.lower() and prop("protoPayload.request.cluster.nodePools") is not None:
+                resource_data['resource_type'] = 'container.projects.locations.clusters.nodePools'
+                resource_data['cluster'] = prop("resource.labels.cluster_name")
                 for pool in prop("protoPayload.request.cluster.nodePools"):
-                    resource_type = 'container.projects.locations.clusters.nodePools'
-                    resource_name = prop("resource.labels.cluster_name") + "/nodePools/" + pool.get('name')
+                    resource_data['name'] = pool.get('name')
                     add_resource()
 
         elif res_type == "gke_nodepool":
-            resource_type = 'container.projects.locations.clusters.nodePools'
-            # nodePool requires parent cluster so we concat it to single variable
-            resource_name = prop("resource.labels.cluster_name") + "/nodePools/" + prop("resource.labels.nodepool_name")
-            project_id = prop("resource.labels.project_id")
-            resource_location = prop("resource.labels.location")
+            resource_data = {
+                'resource_type': 'container.projects.locations.clusters.nodePools',
+                'cluster': prop("resource.labels.cluster_name"),
+                'name': prop("resource.labels.nodepool_name"),
+                'project_id': prop("resource.labels.project_id"),
+                'location': prop("resource.labels.location"),
+            }
             add_resource()
+
+            ## JPC Note: We should update the policy for this to run on a nodepool
+
             # if nodepool image was updated, add cluster resource for re-evaluation
             if "update" in method_name.lower():
-                resource_type = 'container.projects.locations.clusters'
-                resource_name = prop("resource.labels.cluster_name")
+                resource_data['resource_type'] = 'container.projects.locations.clusters'
+                resource_data['name'] =  prop("resource.labels.cluster_name")
                 add_resource()
 
         elif res_type == "audited_resource" and 'BigtableInstanceAdmin' in method_name:
-            resource_name = prop("protoPayload.resourceName").split('/')[-1]
-            project_id = prop("resource.labels.project_id")
-            resource_location = ''
+            resource_data = {
+                'name': prop("protoPayload.resourceName").split('/')[-1],
+                'project_id': prop("resource.labels.project_id"),
+            }
+
             if 'SetIamPolicy' in method_name:
-                resource_type = 'bigtableadmin.projects.instances.iam'
+                resource_data['resource_type'] = 'bigtableadmin.projects.instances.iam'
             else:
-                resource_type = 'bigtableadmin.projects.instances'
+                resource_data['resource_type'] = 'bigtableadmin.projects.instances'
                 add_resource()
-                resource_type = 'bigtableadmin.projects.instances.iam'
+                resource_data['resource_type'] = 'bigtableadmin.projects.instances.iam'
             add_resource()
 
         return resources
