@@ -13,28 +13,99 @@
 # limitations under the License.
 
 
+import dateutil
 import jmespath
+import os
+import time
+from rpe.resources.gcp import GoogleAPIResource
+
+from .base import ParsedMessage
 
 
 class StackdriverParser():
     ''' A collection of functions for parsing Stackdriver log messages '''
 
     @classmethod
-    def _is_auditlog(cls, message):
-        ''' Check whether or not a log message is an audit log '''
-        audit_log_type = 'type.googleapis.com/google.cloud.audit.AuditLog'
-        message_type = jmespath.search('protoPayload."@type"', message)
-        return message_type == audit_log_type
+    def _delay(cls, message_age):
+
+        # Since this message parser is for real-time events, we may want to wait to enforce to avoid
+        # causing issues with IaC tools such as Terraform. If a delay is configured we should take
+        # the age of the message into consideration too
+
+        enforcement_delay = int(os.environ.get('ENFORCEMENT_DELAY', 0))
+        delay = max(0, enforcement_delay - message_age)
+        print({
+            'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our configured delay is %d seconds' % (delay, message_age, enforcement_delay)
+        })
+
+        time.sleep(delay)
+
+    @classmethod
+    def match(cls, message):
+        log_type = jmespath.search('protoPayload."@type"', message)
+        log_name = message.get('logName', '')
+
+        # normal activity logs have logName in this form:
+        #  projects/<p>/logs/cloudaudit.googleapis.com%2Factivity
+        # data access logs have a logName field that looks like:
+        #  projects/<p>/logs/cloudaudit.googleapis.com%2Fdata_access
+        #
+        # try to only handle the normal activity logs
+        return all([
+            log_type == 'type.googleapis.com/google.cloud.audit.AuditLog',
+            log_name.split('/')[-1] == 'cloudaudit.googleapis.com%2Factivity',
+            cls._operation_type(message) == 'write',
+        ])
+
+    @classmethod
+    def parse_message(cls, message_data):
+
+        metadata = cls._get_metadata(message_data)
+
+        # Only return resources if something changed
+        resources = []
+        if metadata.get('operation') == 'write':
+            resources = cls.get_resources(message_data)
+
+        # Only sleep if there are resources to evaluate
+        if len(resources) > 0:
+            cls._delay(metadata.get('message_age', 0))
+
+        return ParsedMessage(metadata, resources)
+
+    @classmethod
+    def _get_metadata(cls, message_data):
+        log_id = message_data.get('insertId', 'unknown-id')
+        log_time_str = message_data.get('timestamp')
+        if log_time_str:
+            log_timestamp = int(dateutil.parser.parse(log_time_str).timestamp())
+        else:
+            log_timestamp = int(time.time())
+
+        message_age = int(time.time()) - log_timestamp
+
+        method_name = jmespath.search('protoPayload.methodName', message_data)
+        operation_type = cls._operation_type(message_data)
+
+        return {
+            'id': log_id,
+            'timestamp': log_timestamp,
+            'operation': operation_type,
+            'method_name': method_name,
+            'message_age': message_age,
+        }
+
+    @classmethod
+    def get_resources(cls, log_message):
+        asset_info = cls.get_assets(log_message)
+
+        return [GoogleAPIResource.factory(**i) for i in asset_info]
 
     @classmethod
     def get_assets(cls, log_message):
         ''' Takes a decoded stackdriver AuditLog message and returns information
         about the asset(s) it references. We attempt to return None if we don't
         recognize the asset type '''
-
-        # Right now, this only works for audit log messages
-        if not cls._is_auditlog(log_message):
-            return None
 
         # We need to know the resource type
         resource_type = jmespath.search('resource.type', log_message)
@@ -45,10 +116,12 @@ class StackdriverParser():
         return data
 
     @classmethod
-    def _operation_type(cls, res_type, method_name):
+    def _operation_type(cls, message_data):
         ''' We only care about _events_ that alter assets. Maintaining this
         list is going to be annoying. Long term, this entire class  should be
         replaced when google provides a real-time event delivery solution '''
+
+        method_name = jmespath.search('protoPayload.methodName', message_data) or ''
 
         last = method_name.split('.')[-1].lower()
         # For batch methods, look for the verb after the word 'batch'
@@ -82,14 +155,9 @@ class StackdriverParser():
 
         def add_resource():
             r = resource_data.copy()
-            r.update({
-                'method_name': method_name,
-                'operation_type': operation_type
-            })
             resources.append(r)
 
         method_name = prop('protoPayload.methodName')
-        operation_type = cls._operation_type(res_type, method_name)
 
         if res_type == 'cloudsql_database' and method_name.startswith('cloudsql.instances'):
 
@@ -245,7 +313,6 @@ class StackdriverParser():
                 resource_data['resource_type'] = 'cloudfunctions.projects.locations.functions.iam'
             add_resource()
 
-
         elif res_type == "cloud_dataproc_cluster":
             resource_data = {
                 'resource_type': 'dataproc.clusters',
@@ -287,7 +354,7 @@ class StackdriverParser():
             # if nodepool image was updated, add cluster resource for re-evaluation
             if "update" in method_name.lower():
                 resource_data['resource_type'] = 'container.projects.locations.clusters'
-                resource_data['name'] =  prop("resource.labels.cluster_name")
+                resource_data['name'] = prop("resource.labels.cluster_name")
                 add_resource()
 
         elif res_type == "audited_resource" and 'BigtableInstanceAdmin' in method_name:
