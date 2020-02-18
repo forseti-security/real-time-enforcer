@@ -23,5 +23,5 @@ class CaiParser:
 
         metadata = message.get('metadata', {})
 
-        resource = GoogleAPIResource.from_cai_data(resource_name, asset_type, content_type)
+        resource = GoogleAPIResource.from_cai_data(name, asset_type, content_type)
         return ParsedMessage([resource], metadata)

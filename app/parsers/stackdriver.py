@@ -144,9 +144,13 @@ class StackdriverParser():
             return 'unknown'
 
     @classmethod
-    def _extract_asset_info(cls, res_type, message):
+    def _extract_asset_info(cls, message):
 
         resources = []
+
+        res_type = jmespath.search('resource.type', message)
+        if res_type is None:
+            return resources
 
         # just shortening the many calls to jmespath throughout this function
         # this sub-function saves us from passing the message each time

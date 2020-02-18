@@ -1,5 +1,3 @@
-from .base import ParsedMessage
-
 class NoMatchParser:
 
     @classmethod
@@ -9,6 +7,7 @@ class NoMatchParser:
     @classmethod
     def parse_message(cls, _):
         pass
+
 
 class MatchExceptionParser:
 

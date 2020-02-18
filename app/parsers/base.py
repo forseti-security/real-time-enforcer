@@ -1,6 +1,10 @@
+from typing import List
+from rpe.resources import Resource
+
+
 class ParsedMessage:
 
-    def __init__(self, metadata, resources):
+    def __init__(self, metadata: dict, resources: List[Resource]):
         self._metadata = metadata
         self._resources = resources
 
