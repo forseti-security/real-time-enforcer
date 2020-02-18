@@ -22,6 +22,7 @@ from google.cloud import pubsub
 from rpe import RPE
 
 from lib.parsers.stackdriver import StackdriverParser
+from lib.parsers.cai import CaiParser
 #from lib.parsers.test_parsers import NoMatchParser
 #from lib.parsers.test_parsers import MatchExceptionParser
 from lib.logger import Logger
@@ -57,6 +58,7 @@ logger = Logger(
 message_parsers = [
 #    NoMatchParser,
 #    MatchExceptionParser,
+    CaiParser,
     StackdriverParser,
 ]
 
