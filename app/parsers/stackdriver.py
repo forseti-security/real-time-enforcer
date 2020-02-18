@@ -97,23 +97,9 @@ class StackdriverParser():
 
     @classmethod
     def get_resources(cls, log_message):
-        asset_info = cls.get_assets(log_message)
+        asset_info = cls._extract_asset_info(log_message)
 
         return [GoogleAPIResource.factory(**i) for i in asset_info]
-
-    @classmethod
-    def get_assets(cls, log_message):
-        ''' Takes a decoded stackdriver AuditLog message and returns information
-        about the asset(s) it references. We attempt to return None if we don't
-        recognize the asset type '''
-
-        # We need to know the resource type
-        resource_type = jmespath.search('resource.type', log_message)
-        if resource_type is None:
-            return None
-
-        data = cls._extract_asset_info(resource_type, log_message)
-        return data
 
     @classmethod
     def _operation_type(cls, message_data):
@@ -145,6 +131,8 @@ class StackdriverParser():
 
     @classmethod
     def _extract_asset_info(cls, message):
+        ''' Takes a decoded stackdriver AuditLog message and returns information
+        about the asset(s) it references. '''
 
         resources = []
 
