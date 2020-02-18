@@ -21,10 +21,10 @@ from google.cloud import pubsub
 
 from rpe import RPE
 
-from lib.parsers.stackdriver import StackdriverParser
-from lib.parsers.cai import CaiParser
-#from lib.parsers.test_parsers import NoMatchParser
-#from lib.parsers.test_parsers import MatchExceptionParser
+from parsers.stackdriver import StackdriverParser
+from parsers.cai import CaiParser
+#from parsers.test_parsers import NoMatchParser
+#from parsers.test_parsers import MatchExceptionParser
 from lib.logger import Logger
 from lib.credentials import CredentialsBroker
 

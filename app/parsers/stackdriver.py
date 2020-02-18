@@ -13,7 +13,7 @@
 # limitations under the License.
 
 
-import dateutil
+import dateutil.parser
 import jmespath
 import os
 import time
