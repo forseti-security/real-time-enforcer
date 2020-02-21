@@ -210,7 +210,6 @@ def callback(pubsub_message):
                         'policy': violated_policy,
                     }
                     project_logger(project_log)
-                    print(project_log)
 
             except Exception as e:
                 # Catch any other exceptions so we can acknowledge the message.
