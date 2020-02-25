@@ -1,17 +1,20 @@
-from typing import List
+from typing import Any, Dict, List
 from rpe.resources import Resource
+from pydantic import BaseModel
 
 
-class ParsedMessage:
+class EnforcerControlData(BaseModel):
+    enforce: bool = True
+    delay_enforcement: bool = True
 
-    def __init__(self, metadata: dict, resources: List[Resource]):
-        self._metadata = metadata
-        self._resources = resources
+    class Config:
+        extra = 'forbid'
 
-    @property
-    def metadata(self):
-        return self._metadata
 
-    @property
-    def resources(self):
-        return self._resources
+class ParsedMessage(BaseModel):
+    metadata: Dict[str, Any]
+    resources: List[Resource]
+    control_data: EnforcerControlData = EnforcerControlData()
+
+    class Config:
+        arbitrary_types_allowed = True

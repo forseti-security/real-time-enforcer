@@ -15,7 +15,6 @@
 
 import dateutil.parser
 import jmespath
-import os
 import time
 from rpe.resources.gcp import GoogleAPIResource
 
@@ -24,21 +23,6 @@ from .base import ParsedMessage
 
 class StackdriverParser():
     ''' A collection of functions for parsing Stackdriver log messages '''
-
-    @classmethod
-    def _delay(cls, message_age):
-
-        # Since this message parser is for real-time events, we may want to wait to enforce to avoid
-        # causing issues with IaC tools such as Terraform. If a delay is configured we should take
-        # the age of the message into consideration too
-
-        enforcement_delay = int(os.environ.get('ENFORCEMENT_DELAY', 0))
-        delay = max(0, enforcement_delay - message_age)
-        print({
-            'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our configured delay is %d seconds' % (delay, message_age, enforcement_delay)
-        })
-
-        time.sleep(delay)
 
     @classmethod
     def match(cls, message):
@@ -67,11 +51,7 @@ class StackdriverParser():
         if metadata.get('operation') == 'write':
             resources = cls.get_resources(message_data)
 
-        # Only sleep if there are resources to evaluate
-        if len(resources) > 0:
-            cls._delay(metadata.get('message_age', 0))
-
-        return ParsedMessage(metadata, resources)
+        return ParsedMessage(metadata=metadata, resources=resources)
 
     @classmethod
     def _get_metadata(cls, message_data):
@@ -158,8 +138,8 @@ class StackdriverParser():
 
                 # CloudSQL logs are inconsistent. See https://issuetracker.google.com/issues/137629452
                 'name': (prop('resource.labels.database_id').split(':')[-1] or
-                        prop('protoPayload.request.body.name') or
-                        prop('protoPayload.request.resource.instanceName.instanceId')),
+                         prop('protoPayload.request.body.name') or
+                         prop('protoPayload.request.resource.instanceName.instanceId')),
 
                 'location': prop('resource.labels.region'),
                 'project_id': prop('resource.labels.project_id'),
@@ -277,8 +257,8 @@ class StackdriverParser():
             add_resource()
 
         elif res_type == "gce_instance":
-            #gce instance return us result images whitch doesn't contains the source_image part.
-            #so we check source_image through the disk resource
+            # gce instance return us result images whitch doesn't contains the source_image part.
+            # so we check source_image through the disk resource
             disk_name = prop("protoPayload.request.disks[?boot].diskName | [0]")
 
             resource_data = {

@@ -88,6 +88,7 @@ def callback(pubsub_message):
 
     # We use the message ID in all logs we emit
     message_id = pubsub_message.message_id
+    message_timestamp = int(pubsub_message.publish_time.timestamp())
 
     try:
         message_data = json.loads(pubsub_message.data)
@@ -128,6 +129,7 @@ def callback(pubsub_message):
     # If no message parsers were able to parse the message, log and return
     if parser_match is None:
         logger({'message_id': message_id, 'message': 'No parsers recognized the message format, discarding message'})
+        print(message_data)
         pubsub_message.ack()
         return
 
@@ -186,38 +188,52 @@ def callback(pubsub_message):
 
         logs = mklogs(message_id, parsed_message.metadata, resource, policies, violations)
 
-        #  TODO: This might need to move somewhere else
-        if not enforce_policy:
-            # TODO: We should still log the policies and violations
+        if enforce_policy and parsed_message.control_data.enforce:
+
+            if enforcement_delay and parsed_message.control_data.delay_enforcement:
+
+                print(parsed_message.metadata)
+                print(parsed_message.control_data.delay_enforcement)
+
+                delay_timestamp = parsed_message.metadata.get('timestamp') or message_timestamp
+                message_age = int(time.time()) - delay_timestamp
+
+                # If the log is old, subtract that from the enforcement delay
+                delay = max(0, enforcement_delay - message_age)
+                logger.debug({
+                    'message_id': message_id,
+                    'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our configured delay is %d seconds' % (delay, message_age, enforcement_delay)
+                })
+                time.sleep(delay)
+
+            for (engine, violated_policy) in violations:
+
+                logger.debug({'message_id': message_id, 'message': f'Executing remediation'})
+
+                try:
+                    engine.remediate(resource, violated_policy)
+                    logs[violated_policy]['remediated'] = True
+                    logs[violated_policy]['remediated_at'] = int(time.time())
+
+                    if per_project_logging:
+                        project_log = {
+                            'event': 'remediation',
+                            'trigger_event': parsed_message.metadata,
+                            'resource_data': resource.to_dict(),
+                            'policy': violated_policy,
+                        }
+                        project_logger(project_log)
+
+                except Exception as e:
+                    # Catch any other exceptions so we can acknowledge the message.
+                    # Otherwise they start to fill up the buffer of unacknowledged messages
+                    logger(dict(
+                        message='Execption while attempting to remediate',
+                        **exc_info(e),
+                    ))
+
+        else:
             logger.debug({'message_id': message_id, 'message': 'Enforcement is disabled, processing complete'})
-            pubsub_message.ack()
-            continue
-
-        for (engine, violated_policy) in violations:
-
-            logger.debug({'message_id': message_id, 'message': f'Executing remediation'})
-
-            try:
-                engine.remediate(resource, violated_policy)
-                logs[violated_policy]['remediated'] = True
-                logs[violated_policy]['remediated_at'] = int(time.time())
-
-                if per_project_logging:
-                    project_log = {
-                        'event': 'remediation',
-                        'trigger_event': parsed_message.metadata,
-                        'resource_data': resource.to_dict(),
-                        'policy': violated_policy,
-                    }
-                    project_logger(project_log)
-
-            except Exception as e:
-                # Catch any other exceptions so we can acknowledge the message.
-                # Otherwise they start to fill up the buffer of unacknowledged messages
-                logger(dict(
-                    message='Execption while attempting to remediate',
-                    **exc_info(e),
-                ))
 
         for policy in logs:
             logger(logs[policy])

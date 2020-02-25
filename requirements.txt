@@ -4,3 +4,4 @@ jmespath
 google-cloud-pubsub
 google-cloud-logging
 google-auth
+pydantic

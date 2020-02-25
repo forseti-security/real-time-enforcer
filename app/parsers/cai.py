@@ -1,27 +1,54 @@
+from pydantic import BaseModel
+from pydantic import ValidationError
 from rpe.resources.gcp import GoogleAPIResource
+from rpe.exceptions import ResourceException
 
+from .base import EnforcerControlData
 from .base import ParsedMessage
+
+
+class MessageMetadata(BaseModel):
+    src: str
+
+    class Config:
+        extra = 'allow'
+
+
+class EnforcementMessage(BaseModel):
+    name: str
+    asset_type: str
+    metadata: MessageMetadata
+    control_data: EnforcerControlData = EnforcerControlData(delay_enforcement=False)
+
+    class Config:
+        extra = 'forbid'
 
 
 class CaiParser:
 
+    content_types = ['resource', 'iam']
+
     @classmethod
     def match(cls, message):
-        expected_keys = [
-            'name',
-            'content_type',
-            'asset_type',
-        ]
-        return all(key in message for key in expected_keys)
+        try:
+            EnforcementMessage(**message)
+            return True
+        except ValidationError:
+            return False
 
     @classmethod
     def parse_message(cls, message):
 
-        name = message.get('name')
-        asset_type = message.get('asset_type')
-        content_type = message.get('content_type')
+        m = EnforcementMessage(**message)
 
-        metadata = message.get('metadata', {})
+        resources = []
+        for content_type in cls.content_types:
+            try:
+                resource = GoogleAPIResource.from_cai_data(m.name, m.asset_type, content_type)
+                resources.append(resource)
+            except ResourceException:
+                raise
+                # Not all asset types support all content types, ignore e
+                pass
 
-        resource = GoogleAPIResource.from_cai_data(name, asset_type, content_type)
-        return ParsedMessage([resource], metadata)
+        return ParsedMessage(resources=resources, metadata=m.metadata, control_data=m.control_data)
