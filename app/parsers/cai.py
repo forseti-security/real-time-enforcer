@@ -17,6 +17,7 @@ from pydantic import BaseModel
 from pydantic import ValidationError
 from rpe.resources.gcp import GoogleAPIResource
 from rpe.exceptions import ResourceException
+from typing import Optional
 
 from .base import EnforcerControlData
 from .base import ParsedMessage
@@ -32,6 +33,7 @@ class MessageMetadata(BaseModel):
 class EnforcementMessage(BaseModel):
     name: str
     asset_type: str
+    project_id: Optional[str] = None
     metadata: MessageMetadata
     control_data: EnforcerControlData = EnforcerControlData(delay_enforcement=False)
 
@@ -59,7 +61,7 @@ class CaiParser:
         resources = []
         for content_type in cls.content_types:
             try:
-                resource = GoogleAPIResource.from_cai_data(m.name, m.asset_type, content_type)
+                resource = GoogleAPIResource.from_cai_data(m.name, m.asset_type, content_type, project_id=m.project_id)
                 resources.append(resource)
             except ResourceException:
                 # Not all asset types support all content types
