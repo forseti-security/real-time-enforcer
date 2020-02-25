@@ -47,8 +47,7 @@ class CaiParser:
                 resource = GoogleAPIResource.from_cai_data(m.name, m.asset_type, content_type)
                 resources.append(resource)
             except ResourceException:
-                raise
-                # Not all asset types support all content types, ignore e
+                # Not all asset types support all content types
                 pass
 
         return ParsedMessage(resources=resources, metadata=m.metadata, control_data=m.control_data)

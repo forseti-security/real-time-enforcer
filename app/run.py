@@ -129,7 +129,6 @@ def callback(pubsub_message):
     # If no message parsers were able to parse the message, log and return
     if parser_match is None:
         logger({'message_id': message_id, 'message': 'No parsers recognized the message format, discarding message'})
-        print(message_data)
         pubsub_message.ack()
         return
 
@@ -191,9 +190,6 @@ def callback(pubsub_message):
         if enforce_policy and parsed_message.control_data.enforce:
 
             if enforcement_delay and parsed_message.control_data.delay_enforcement:
-
-                print(parsed_message.metadata)
-                print(parsed_message.control_data.delay_enforcement)
 
                 delay_timestamp = parsed_message.metadata.get('timestamp') or message_timestamp
                 message_age = int(time.time()) - delay_timestamp
