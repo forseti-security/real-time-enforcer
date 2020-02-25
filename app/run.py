@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import dateutil.parser
 import json
 import os
 import time
@@ -21,9 +20,9 @@ import traceback
 from google.cloud import pubsub
 
 from rpe import RPE
-from rpe.resources import Resource
 
-from lib.stackdriver import StackdriverParser
+from parsers.stackdriver import StackdriverParser
+from parsers.cai import CaiParser
 from lib.logger import Logger
 from lib.credentials import CredentialsBroker
 
@@ -53,6 +52,12 @@ logger = Logger(
     debug_logging
 )
 
+# Setup message handlers
+message_parsers = [
+    CaiParser,
+    StackdriverParser,
+]
+
 # Instantiate our rpe
 rpeconfig = {
     'policy_engines': [
@@ -77,106 +82,88 @@ logger(running_config)
 
 def callback(pubsub_message):
 
+    # We use the message ID in all logs we emit
+    message_id = pubsub_message.message_id
+    message_timestamp = int(pubsub_message.publish_time.timestamp())
+
     try:
-        log_message = json.loads(pubsub_message.data)
-        log_id = log_message.get('insertId', 'unknown-id')
-
-        # Get the timestamp from the log message
-        log_time_str = log_message.get('timestamp')
-        if log_time_str:
-            log_timestamp = int(dateutil.parser.parse(log_time_str).timestamp())
-        else:
-            log_timestamp = int(time.time())
-
+        message_data = json.loads(pubsub_message.data)
     except (json.JSONDecodeError, AttributeError):
         # We can't parse the log message, nothing to do here
-        logger.debug('Failure loading json, discarding message')
+        logger.debug({'message_id': message_id, 'message': 'Failure loading json, discarding message'})
         pubsub_message.ack()
         return
 
-    logger.debug({'log_id': log_id, 'message': 'Received & decoded json message'})
+    logger.debug({'message_id': message_id, 'message': 'Received & decoded json message'})
 
-    # normal activity logs have logName in this form:
-    #  projects/<p>/logs/cloudaudit.googleapis.com%2Factivity
-    # data access logs have a logName field that looks like:
-    #  projects/<p>/logs/cloudaudit.googleapis.com%2Fdata_access
-    #
-    # try to only handle the normal activity logs
-    log_name_end = log_message.get('logName', '').split('/')[-1]
-    if log_name_end != 'cloudaudit.googleapis.com%2Factivity':
-        logger.debug({'log_id': log_id, 'message': 'Not an activity log, discarding'})
-        pubsub_message.ack()
-        return
+    # Only one message parser should be able to parse a given message, lets capture which one it is
+    parser_match = None
 
-    # Attempt to get a list of asset(s) affected by this event
-    try:
-        assets = StackdriverParser.get_assets(log_message)
-
-        if len(assets) == 0:
-            # We did not recognize any assets in this message
-            logger.debug({
-                'log_id': log_id,
-                'message': 'No recognized assets in log'
-            })
-
-            pubsub_message.ack()
-            return
-
-    except Exception as e:
-        # If we fail to get asset info from the message, the message must be
-        # bad
-        logger.debug({
-            'log_id': log_id,
-            'message': 'Exception while parsing message for asset details',
-            'details': str(e)
-        })
-
-        pubsub_message.ack()
-        return
-
-    for asset_info in assets:
-
-        if asset_info.get('operation_type') != 'write':
-            # No changes, no need to check anything
-            logger.debug({
-                'log_id': log_id,
-                'message': 'Message is not a create/update, nothing to do'}
-            )
-            pubsub_message.ack()
-            continue
+    for parser in message_parsers:
 
         try:
-            project_creds = cb.get_credentials(project_id=asset_info['project_id'])
+            if not parser.match(message_data):
+                logger.debug({'message_id': message_id, 'message': f'Message not matched by parser {parser.__name__}'})
+                continue
+
+            logger.debug({'message_id': message_id, 'message': f'Message matched by parser {parser.__name__}'})
+
+            parsed_message = parser.parse_message(message_data)
+            parser_match = parser
+
+            if len(parsed_message.resources) == 0:
+                # We did not recognize any assets in this message
+                logger.debug({
+                    'message_id':
+                    message_id, 'message': f'No resources identified in message parsed by {parser.__name__}',
+                    'metadata': parsed_message.metadata
+                })
+
+                pubsub_message.ack()
+                return
+            break
+
+        except Exception as e:
+            logger({
+                'message_id': message_id,
+                'message': f'Exception while parsing message with {parser.__name__}',
+                **exc_info(e)
+            })
+
+    # If no message parsers were able to parse the message, log and return
+    if parser_match is None:
+        logger({'message_id': message_id, 'message': 'No parsers recognized the message format, discarding message'})
+        pubsub_message.ack()
+        return
+
+    for resource in parsed_message.resources:
+
+        try:
+
+            # Set the resource's credentials before any API calls
+            project_creds = cb.get_credentials(project_id=resource.project_id)
+            resource.client_kwargs = {
+                'credentials': project_creds
+            }
+
             if per_project_logging:
                 project_logger = Logger(
                     app_name,
                     True,  # per-project logging is always stackdriver
-                    asset_info['project_id'],
+                    resource.project_id,
                     project_creds
                 )
-            resource = Resource.factory(
-                'gcp',
-                client_kwargs={
-                    'credentials': project_creds,
-                },
-                **asset_info
-            )
+
         except Exception as e:
-            log_failure('Internal failure in rpe-lib', asset_info, log_id, e)
+            logger({
+                'message_id': message_id,
+                'message': 'Internal failure in rpe-lib',
+                **exc_info(e),
+            })
             pubsub_message.ack()
             continue
 
-        try:
-            fill_asset_info(asset_info, resource)
-        except Exception as e:
-            # We can still proceed without the additional data, but we should log that it happened
-            log_failure('Failed to load additional asset metadata', asset_info, log_id, e)
-
-
-        logger.debug({
-            'log_id': log_id,
-            'message': 'Analyzing for violations'
-        })
+        logger.debug({'message_id': message_id, 'message': f'Evaluating resource for violations'})
 
         # Fetch a list of policies and then violations.  The policy
         # list is needed to log data about evaluated policies that are
@@ -185,62 +172,70 @@ def callback(pubsub_message):
         try:
             policies = rpe.policies(resource)
         except Exception as e:
-            log_failure('Exception while retrieving policies', asset_info,
-                        log_id, e)
+            logger({
+                'message_id': message_id,
+                'message': 'Exception while retrieving policies',
+                **exc_info(e),
+            })
             pubsub_message.ack()
             continue
 
         try:
             violations = rpe.violations(resource)
         except Exception as e:
-            log_failure('Exception while checking for violations', asset_info,
-                        log_id, e)
+            logger(dict(
+                message='Exception while checking for violations',
+                **exc_info(e),
+            ))
             continue
 
-        # Prepare log messages
-        message_age = int(time.time()) - log_timestamp
-        logs = mklogs(log_id, asset_info, policies, violations, message_age)
+        logs = mklogs(message_id, parsed_message.metadata, resource, policies, violations)
 
-        if not enforce_policy:
-            logger.debug({
-                'log_id': log_id,
-                'message': 'Enforcement is disabled, processing complete'
-            })
-            pubsub_message.ack()
-            continue
+        if enforce_policy and parsed_message.control_data.enforce:
 
-        if enforcement_delay:
-            # If the log is old, subtract that from the enforcement delay
-            delay = max(0, enforcement_delay - message_age)
-            logger.debug({
-                'log_id': log_id,
-                'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our configured delay is %d seconds' % (delay, message_age, enforcement_delay)
-            })
-            time.sleep(delay)
+            if enforcement_delay and parsed_message.control_data.delay_enforcement:
 
-        for (engine, violated_policy) in violations:
-            logger.debug({'log_id': log_id, 'message': 'Executing remediation'})
+                delay_timestamp = parsed_message.metadata.get('timestamp') or message_timestamp
+                message_age = int(time.time()) - delay_timestamp
 
-            try:
-                engine.remediate(resource, violated_policy)
-                logs[violated_policy]['remediated'] = True
-                logs[violated_policy]['remediated_at'] = int(time.time())
+                # If the log is old, subtract that from the enforcement delay
+                delay = max(0, enforcement_delay - message_age)
+                logger.debug({
+                    'message_id': message_id,
+                    'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our'
+                               'configured delay is %d seconds' % (delay, message_age, enforcement_delay)
+                })
+                time.sleep(delay)
 
-                if per_project_logging:
-                    project_log = {
-                        'event': 'remediation',
-                        'trigger_event': asset_info,
-                        'policy': violated_policy,
-                    }
-                    project_logger(project_log)
+            for (engine, violated_policy) in violations:
 
-            except Exception as e:
-                # Catch any other exceptions so we can acknowledge the message.
-                # Otherwise they start to fill up the buffer of unacknowledged messages
-                log_failure('Execption while attempting to remediate',
-                            asset_info, log_id, e)
+                logger.debug({'message_id': message_id, 'message': f'Executing remediation'})
 
-        # submit all of the accumulated logs
+                try:
+                    engine.remediate(resource, violated_policy)
+                    logs[violated_policy]['remediated'] = True
+                    logs[violated_policy]['remediated_at'] = int(time.time())
+
+                    if per_project_logging:
+                        project_log = {
+                            'event': 'remediation',
+                            'trigger_event': parsed_message.metadata,
+                            'resource_data': resource.to_dict(),
+                            'policy': violated_policy,
+                        }
+                        project_logger(project_log)
+
+                except Exception as e:
+                    # Catch any other exceptions so we can acknowledge the message.
+                    # Otherwise they start to fill up the buffer of unacknowledged messages
+                    logger(dict(
+                        message='Execption while attempting to remediate',
+                        **exc_info(e),
+                    ))
+
+        else:
+            logger.debug({'message_id': message_id, 'message': 'Enforcement is disabled, processing complete'})
+
         for policy in logs:
             logger(logs[policy])
 
@@ -248,53 +243,31 @@ def callback(pubsub_message):
     pubsub_message.ack()
 
 
-def log_failure(log_message, asset_info, log_id, exception):
-    '''convience function to log details during a failure'''
-    logger({
-        'log_id': log_id,
-        'asset_info': asset_info,
-        'message': log_message,
+def exc_info(exception):
+    return {
         'details': str(exception),
         'trace': traceback.format_exc(),
-    })
+    }
 
 
-def mklogs(log_id, asset_info, policies, violations, message_age):
+def mklogs(message_id, metadata, resource, policies, violations):
     logs = {}
     violated_policies = {y for x, y in violations}
     evaluated_at = int(time.time())
+    resource_data = resource.to_dict()
 
     for policy in policies:
         logs[policy] = {
-            'log_id': log_id,
+            'message_id': message_id,
             'policy': policy,
-            'asset_info': asset_info,
+            'resource_data': resource_data,
             'violation': policy in violated_policies,
             'evaluated_at': evaluated_at,
             'remediated': False,  # will be updated after remediation occurs
-            'message_age': message_age,
+            'metadata': metadata,
         }
 
     return logs
-
-
-def fill_asset_info(asset_info, resource):
-    '''fills in the asset_info dict with more details about the resource
-
-    This information is mostly used to produce more useful log messages.'''
-    asset_info['org_id'] = find_org_id(resource)
-    asset_info['full_resource_name'] = resource.full_resource_name()
-    asset_info['cai_type'] = resource.cai_type
-
-
-def find_org_id(resource):
-    '''Returns the org id, or None if it doesn't exist or can't be found'''
-    if resource.ancestry is not None:
-        for a in resource.ancestry['ancestor']:
-            if a['resourceId']['type'] == 'organization':
-                return 'organizations/%s' % a['resourceId']['id']
-
-    return None
 
 
 if __name__ == "__main__":

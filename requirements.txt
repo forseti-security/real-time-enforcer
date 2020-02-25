@@ -1,6 +1,7 @@
 python-dateutil
-rpe-lib>=1.0.0
+rpe-lib>=1.1.1
 jmespath
 google-cloud-pubsub
 google-cloud-logging
 google-auth
+pydantic

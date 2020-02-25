@@ -13,42 +13,80 @@
 # limitations under the License.
 
 
+import dateutil.parser
 import jmespath
+import time
+from rpe.resources.gcp import GoogleAPIResource
+
+from .base import ParsedMessage
 
 
 class StackdriverParser():
     ''' A collection of functions for parsing Stackdriver log messages '''
 
     @classmethod
-    def _is_auditlog(cls, message):
-        ''' Check whether or not a log message is an audit log '''
-        audit_log_type = 'type.googleapis.com/google.cloud.audit.AuditLog'
-        message_type = jmespath.search('protoPayload."@type"', message)
-        return message_type == audit_log_type
+    def match(cls, message):
+        log_type = jmespath.search('protoPayload."@type"', message)
+        log_name = message.get('logName', '')
+
+        # normal activity logs have logName in this form:
+        #  projects/<p>/logs/cloudaudit.googleapis.com%2Factivity
+        # data access logs have a logName field that looks like:
+        #  projects/<p>/logs/cloudaudit.googleapis.com%2Fdata_access
+        #
+        # try to only handle the normal activity logs
+        return all([
+            log_type == 'type.googleapis.com/google.cloud.audit.AuditLog',
+            log_name.split('/')[-1] == 'cloudaudit.googleapis.com%2Factivity',
+        ])
 
     @classmethod
-    def get_assets(cls, log_message):
-        ''' Takes a decoded stackdriver AuditLog message and returns information
-        about the asset(s) it references. We attempt to return None if we don't
-        recognize the asset type '''
+    def parse_message(cls, message_data):
 
-        # Right now, this only works for audit log messages
-        if not cls._is_auditlog(log_message):
-            return None
+        metadata = cls._get_metadata(message_data)
 
-        # We need to know the resource type
-        resource_type = jmespath.search('resource.type', log_message)
-        if resource_type is None:
-            return None
+        # Only return resources if something changed
+        resources = []
+        if metadata.get('operation') == 'write':
+            resources = cls.get_resources(message_data)
 
-        data = cls._extract_asset_info(resource_type, log_message)
-        return data
+        return ParsedMessage(metadata=metadata, resources=resources)
 
     @classmethod
-    def _operation_type(cls, res_type, method_name):
+    def _get_metadata(cls, message_data):
+        log_id = message_data.get('insertId', 'unknown-id')
+        log_time_str = message_data.get('timestamp')
+        if log_time_str:
+            log_timestamp = int(dateutil.parser.parse(log_time_str).timestamp())
+        else:
+            log_timestamp = int(time.time())
+
+        message_age = int(time.time()) - log_timestamp
+
+        method_name = jmespath.search('protoPayload.methodName', message_data)
+        operation_type = cls._operation_type(message_data)
+
+        return {
+            'id': log_id,
+            'timestamp': log_timestamp,
+            'operation': operation_type,
+            'method_name': method_name,
+            'message_age': message_age,
+        }
+
+    @classmethod
+    def get_resources(cls, log_message):
+        asset_info = cls._extract_asset_info(log_message)
+
+        return [GoogleAPIResource.factory(**i) for i in asset_info]
+
+    @classmethod
+    def _operation_type(cls, message_data):
         ''' We only care about _events_ that alter assets. Maintaining this
         list is going to be annoying. Long term, this entire class  should be
         replaced when google provides a real-time event delivery solution '''
+
+        method_name = jmespath.search('protoPayload.methodName', message_data) or ''
 
         last = method_name.split('.')[-1].lower()
         # For batch methods, look for the verb after the word 'batch'
@@ -59,7 +97,20 @@ class StackdriverParser():
         if last.startswith(read_prefixes):
             return 'read'
 
-        write_prefixes = ('create', 'update', 'insert', 'patch', 'set', 'debug', 'enable', 'disable', 'expand', 'deactivate', 'activate')
+        write_prefixes = (
+            'create',
+            'update',
+            'insert',
+            'patch',
+            'set',
+            'debug',
+            'enable',
+            'disable',
+            'expand',
+            'deactivate',
+            'activate'
+        )
+
         if last.startswith(write_prefixes):
             return 'write'
 
@@ -71,9 +122,15 @@ class StackdriverParser():
             return 'unknown'
 
     @classmethod
-    def _extract_asset_info(cls, res_type, message):
+    def _extract_asset_info(cls, message):
+        ''' Takes a decoded stackdriver AuditLog message and returns information
+        about the asset(s) it references. '''
 
         resources = []
+
+        res_type = jmespath.search('resource.type', message)
+        if res_type is None:
+            return resources
 
         # just shortening the many calls to jmespath throughout this function
         # this sub-function saves us from passing the message each time
@@ -82,14 +139,9 @@ class StackdriverParser():
 
         def add_resource():
             r = resource_data.copy()
-            r.update({
-                'method_name': method_name,
-                'operation_type': operation_type
-            })
             resources.append(r)
 
         method_name = prop('protoPayload.methodName')
-        operation_type = cls._operation_type(res_type, method_name)
 
         if res_type == 'cloudsql_database' and method_name.startswith('cloudsql.instances'):
 
@@ -98,8 +150,8 @@ class StackdriverParser():
 
                 # CloudSQL logs are inconsistent. See https://issuetracker.google.com/issues/137629452
                 'name': (prop('resource.labels.database_id').split(':')[-1] or
-                        prop('protoPayload.request.body.name') or
-                        prop('protoPayload.request.resource.instanceName.instanceId')),
+                         prop('protoPayload.request.body.name') or
+                         prop('protoPayload.request.resource.instanceName.instanceId')),
 
                 'location': prop('resource.labels.region'),
                 'project_id': prop('resource.labels.project_id'),
@@ -162,7 +214,11 @@ class StackdriverParser():
             }
             add_resource()
 
-        elif res_type == 'audited_resource' and ('EnableService' in method_name or 'DisableService' in method_name or 'ctivateService' in method_name):
+        elif res_type == 'audited_resource' and (
+            'EnableService' in method_name or
+            'DisableService' in method_name or
+            'ctivateService' in method_name
+        ):
 
             resource_data = {
                 'resource_type': 'serviceusage.services',
@@ -170,7 +226,8 @@ class StackdriverParser():
             }
 
             # Check if multiple services were included in the request
-            # The Google Cloud Console generates (De)activate calls that logs a different format so we check both known formats
+            # The Google Cloud Console generates (De)activate calls that logs a different format so we check both
+            # known formats
             services = prop('protoPayload.request.serviceIds') or prop('protoPayload.request.serviceNames')
             if services:
                 for s in services:
@@ -217,8 +274,8 @@ class StackdriverParser():
             add_resource()
 
         elif res_type == "gce_instance":
-            #gce instance return us result images whitch doesn't contains the source_image part.
-            #so we check source_image through the disk resource
+            # gce instance return us result images whitch doesn't contains the source_image part.
+            # so we check source_image through the disk resource
             disk_name = prop("protoPayload.request.disks[?boot].diskName | [0]")
 
             resource_data = {
@@ -244,7 +301,6 @@ class StackdriverParser():
                 add_resource()
                 resource_data['resource_type'] = 'cloudfunctions.projects.locations.functions.iam'
             add_resource()
-
 
         elif res_type == "cloud_dataproc_cluster":
             resource_data = {
@@ -282,12 +338,10 @@ class StackdriverParser():
             }
             add_resource()
 
-            ## JPC Note: We should update the policy for this to run on a nodepool
-
             # if nodepool image was updated, add cluster resource for re-evaluation
             if "update" in method_name.lower():
                 resource_data['resource_type'] = 'container.projects.locations.clusters'
-                resource_data['name'] =  prop("resource.labels.cluster_name")
+                resource_data['name'] = prop("resource.labels.cluster_name")
                 add_resource()
 
         elif res_type == "audited_resource" and 'BigtableInstanceAdmin' in method_name:
