@@ -97,7 +97,20 @@ class StackdriverParser():
         if last.startswith(read_prefixes):
             return 'read'
 
-        write_prefixes = ('create', 'update', 'insert', 'patch', 'set', 'debug', 'enable', 'disable', 'expand', 'deactivate', 'activate')
+        write_prefixes = (
+            'create',
+            'update',
+            'insert',
+            'patch',
+            'set',
+            'debug',
+            'enable',
+            'disable',
+            'expand',
+            'deactivate',
+            'activate'
+        )
+
         if last.startswith(write_prefixes):
             return 'write'
 
@@ -201,7 +214,11 @@ class StackdriverParser():
             }
             add_resource()
 
-        elif res_type == 'audited_resource' and ('EnableService' in method_name or 'DisableService' in method_name or 'ctivateService' in method_name):
+        elif res_type == 'audited_resource' and (
+            'EnableService' in method_name or
+            'DisableService' in method_name or
+            'ctivateService' in method_name
+        ):
 
             resource_data = {
                 'resource_type': 'serviceusage.services',
@@ -209,7 +226,8 @@ class StackdriverParser():
             }
 
             # Check if multiple services were included in the request
-            # The Google Cloud Console generates (De)activate calls that logs a different format so we check both known formats
+            # The Google Cloud Console generates (De)activate calls that logs a different format so we check both
+            # known formats
             services = prop('protoPayload.request.serviceIds') or prop('protoPayload.request.serviceNames')
             if services:
                 for s in services:

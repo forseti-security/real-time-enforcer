@@ -23,8 +23,6 @@ from rpe import RPE
 
 from parsers.stackdriver import StackdriverParser
 from parsers.cai import CaiParser
-#from parsers.test_parsers import NoMatchParser
-#from parsers.test_parsers import MatchExceptionParser
 from lib.logger import Logger
 from lib.credentials import CredentialsBroker
 
@@ -56,8 +54,6 @@ logger = Logger(
 
 # Setup message handlers
 message_parsers = [
-#    NoMatchParser,
-#    MatchExceptionParser,
     CaiParser,
     StackdriverParser,
 ]
@@ -117,14 +113,22 @@ def callback(pubsub_message):
 
             if len(parsed_message.resources) == 0:
                 # We did not recognize any assets in this message
-                logger.debug({'message_id': message_id, 'message': f'No resources identified in message parsed by {parser.__name__}', 'metadata': parsed_message.metadata})
+                logger.debug({
+                    'message_id':
+                    message_id, 'message': f'No resources identified in message parsed by {parser.__name__}',
+                    'metadata': parsed_message.metadata
+                })
 
                 pubsub_message.ack()
                 return
             break
 
         except Exception as e:
-            logger({'message_id': message_id, 'message': f'Exception while parsing message with {parser.__name__}', **exc_info(e)})
+            logger({
+                'message_id': message_id,
+                'message': f'Exception while parsing message with {parser.__name__}',
+                **exc_info(e)
+            })
 
     # If no message parsers were able to parse the message, log and return
     if parser_match is None:
@@ -198,7 +202,8 @@ def callback(pubsub_message):
                 delay = max(0, enforcement_delay - message_age)
                 logger.debug({
                     'message_id': message_id,
-                    'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our configured delay is %d seconds' % (delay, message_age, enforcement_delay)
+                    'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our'
+                               'configured delay is %d seconds' % (delay, message_age, enforcement_delay)
                 })
                 time.sleep(delay)
 

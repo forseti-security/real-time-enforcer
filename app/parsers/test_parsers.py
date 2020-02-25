@@ -13,6 +13,8 @@
 # limitations under the License.
 
 
+# These may be useful when building a new parser or testing the application
+
 class NoMatchParser:
 
     @classmethod
