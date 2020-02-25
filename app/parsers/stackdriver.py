@@ -38,7 +38,6 @@ class StackdriverParser():
         return all([
             log_type == 'type.googleapis.com/google.cloud.audit.AuditLog',
             log_name.split('/')[-1] == 'cloudaudit.googleapis.com%2Factivity',
-            cls._operation_type(message) == 'write',
         ])
 
     @classmethod
@@ -320,8 +319,6 @@ class StackdriverParser():
                 'location': prop("resource.labels.location"),
             }
             add_resource()
-
-            ## JPC Note: We should update the policy for this to run on a nodepool
 
             # if nodepool image was updated, add cluster resource for re-evaluation
             if "update" in method_name.lower():
