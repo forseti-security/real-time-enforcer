@@ -19,18 +19,13 @@ from rpe.resources.gcp import GoogleAPIResource
 from rpe.exceptions import ResourceException
 from typing import Optional
 
-from .base import EnforcerControlData
-from .base import ParsedMessage
-
-
-class MessageMetadata(BaseModel):
-    src: str
-
-    class Config:
-        extra = 'allow'
+from .models import EnforcerControlData
+from .models import MessageMetadata
+from .models import ParsedMessage
 
 
 class EnforcementMessage(BaseModel):
+    ''' The format of the messages this parser will handle '''
     name: str
     asset_type: str
     project_id: Optional[str] = None

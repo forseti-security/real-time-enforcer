@@ -18,7 +18,7 @@ import jmespath
 import time
 from rpe.resources.gcp import GoogleAPIResource
 
-from .base import ParsedMessage
+from .models import ParsedMessage
 
 
 class StackdriverParser():
@@ -72,6 +72,7 @@ class StackdriverParser():
             'operation': operation_type,
             'method_name': method_name,
             'message_age': message_age,
+            'src': 'stackdriver-parser',
         }
 
     @classmethod

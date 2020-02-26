@@ -116,7 +116,7 @@ def callback(pubsub_message):
                 logger.debug({
                     'message_id':
                     message_id, 'message': f'No resources identified in message parsed by {parser.__name__}',
-                    'metadata': parsed_message.metadata
+                    'metadata': parsed_message.metadata.dict()
                 })
 
                 pubsub_message.ack()
@@ -189,13 +189,13 @@ def callback(pubsub_message):
             ))
             continue
 
-        logs = mklogs(message_id, parsed_message.metadata, resource, policies, violations)
+        logs = mklogs(message_id, parsed_message.metadata.dict(), resource, policies, violations)
 
         if enforce_policy and parsed_message.control_data.enforce:
 
             if enforcement_delay and parsed_message.control_data.delay_enforcement:
 
-                delay_timestamp = parsed_message.metadata.get('timestamp') or message_timestamp
+                delay_timestamp = parsed_message.metadata.timestamp or message_timestamp
                 message_age = int(time.time()) - delay_timestamp
 
                 # If the log is old, subtract that from the enforcement delay
@@ -219,7 +219,7 @@ def callback(pubsub_message):
                     if per_project_logging:
                         project_log = {
                             'event': 'remediation',
-                            'trigger_event': parsed_message.metadata,
+                            'trigger_event': parsed_message.metadata.dict(),
                             'resource_data': resource.to_dict(),
                             'policy': violated_policy,
                         }
