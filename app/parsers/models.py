@@ -12,9 +12,18 @@
 # limitations under the License.
 
 
-from typing import Any, Dict, List
+from typing import List
 from rpe.resources import Resource
 from pydantic import BaseModel
+
+
+# Parser-supplied metadata is arbitrary, but some fields are required
+# currently just `src`
+class MessageMetadata(BaseModel):
+    src: str
+
+    class Config:
+        extra = 'allow'
 
 
 class EnforcerControlData(BaseModel):
@@ -26,9 +35,10 @@ class EnforcerControlData(BaseModel):
 
 
 class ParsedMessage(BaseModel):
-    metadata: Dict[str, Any]
+    metadata: MessageMetadata
     resources: List[Resource]
     control_data: EnforcerControlData = EnforcerControlData()
 
     class Config:
         arbitrary_types_allowed = True
+        extra = 'forbid'
