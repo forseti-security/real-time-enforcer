@@ -285,7 +285,10 @@ class StackdriverParser():
                 'location': prop("resource.labels.zone"),
                 'project_id': prop("resource.labels.project_id"),
             }
-            add_resource()
+
+            # Logs are sent for appengine instances, but the google api hides them and will return a 404
+            if not resource_data['name'].startswith('aef-'):
+                add_resource()
 
         elif res_type == "cloud_function":
             resource_data = {
