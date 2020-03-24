@@ -4,7 +4,7 @@ The Forseti Real-Time Enforcer uses a Stackdriver log export (to a Pub/Sub topic
 
 [![Build Status](https://api.travis-ci.org/cleardataeng/forseti-policy-enforcer.svg?branch=master)](https://travis-ci.org/cleardataeng/forseti-policy-enforcer)
 
-This document will walk you through setting up a Stackdriver Log Export for your entire organization, filtering for AuditLog entries that create or update resources, and sending those log entries to a Pub/Sub topic. We will subscribe to that topic and evaluate each incoming log message and attempt to map it to a resource that [micromanager](https://github.com/cleardataeng/micromanager) recognizes. If so, we'll evaluate it with micromanager against an [Open Policy Agent](https://www.openpolicyagent.org/) instance.
+This document will walk you through setting up a Stackdriver Log Export for your entire organization, filtering for AuditLog entries that create or update resources, and sending those log entries to a Pub/Sub topic. We will subscribe to that topic and evaluate each incoming log message and attempt to map it to a resource that [rpe-lib](https://github.com/forseti-security/resource-policy-evaluation-library) recognizes. If so, we'll evaluate it with rpe-lib against an [Open Policy Agent](https://www.openpolicyagent.org/) instance.
 
 If you prefer to operate on a specific folder or project, the log export commands in this document should be altered appropriately.
 
@@ -27,11 +27,11 @@ organization_id='000000000000' # The numeric ID of the organization
 First, we'll configure a log export to send specific logs to a pub/sub topic. In this example, we will export logs from the entire organization so we catch events from each project. We will filter for AuditLog entries where the severity is not `ERROR`. We're also filtering out logs from the `k8s.io` service because they're noisy, and any methodthat includes the string `delete`. You can tweak the export and filter to suit your needs.
 
 ```bash
-gcloud beta logging sinks create micromanager-events \
-  pubsub.googleapis.com/projects/$project_id/topics/micromanager-events \
+gcloud beta logging sinks create rpe-lib-events \
+  pubsub.googleapis.com/projects/$project_id/topics/rpe-lib-events \
   --organization=$organization_id \
   --include-children \
-  --log-filter='protoPayload."@type"="type.googleapis.com/google.cloud.audit.AuditLog" severity!="ERROR" protoPayload.serviceName!="k8s.io" NOT protoPayload.methodName: "delete"' 
+  --log-filter='’logName:”logs/cloudaudit.googleapis.com%2Factivity” severity>INFO’ 
 ```
 
 ## Setting up the Pub/Sub resources
@@ -40,23 +40,23 @@ We now need to create the Pub/Sub topic and subscription, and add an IAM binding
 
 ```shell
 # Creating the topic
-gcloud pubsub topics create micromanager-events --project=$project_id
+gcloud pubsub topics create rpe-lib-events --project=$project_id
 
 # Get the writer identity for the log export
-writer_id=$(gcloud logging sinks describe micromanager-events \
+writer_id=$(gcloud logging sinks describe rpe-lib-events \
   --project=$project_id \
   --format='value(writerIdentity)'
 )
 
 # Add an IAM binding allowing the log writer to publish to our topic
-gcloud alpha pubsub topics add-iam-policy-binding micromanager-events \
+gcloud alpha pubsub topics add-iam-policy-binding rpe-lib-events \
   --member=$writer_id \
   --role=roles/pubsub.publisher \
   --project=$project_id
 
 # Create the subscription our application will use
-gcloud pubsub subscriptions create micromanager \
-  --topic micromanager-events \
+gcloud pubsub subscriptions create rpe-lib \
+  --topic rpe-lib-events \
   --project=$project_id
 
 ```
@@ -67,15 +67,15 @@ Our application needs access to subscribe to the Pub/Sub subscription for messag
 
 ```shell
 # Create a new service account for running the application
-gcloud iam service-accounts create micromanager --project=$project_id
+gcloud iam service-accounts create rpe-lib --project=$project_id
 
 # Create a service account key and save it
-gcloud iam service-accounts keys create micromanager_credentials.json \
-  --iam-account=micromanager@$project_id.iam.gserviceaccount.com
+gcloud iam service-accounts keys create rpe-lib_credentials.json \
+  --iam-account=rpe-lib@$project_id.iam.gserviceaccount.com
 
 # Add policy to access subscription
-gcloud beta pubsub subscriptions add-iam-policy-binding micromanager \
-  --member=serviceAccount:micromanager@$project_id.iam.gserviceaccount.com \
+gcloud beta pubsub subscriptions add-iam-policy-binding rpe-lib \
+  --member=serviceAccount:rpe-lib@$project_id.iam.gserviceaccount.com \
   --role=roles/pubsub.subscriber \
   --project=$project_id
 
@@ -83,7 +83,7 @@ gcloud beta pubsub subscriptions add-iam-policy-binding micromanager \
 # You'll also need to pass the `STACKDRIVER_LOGGING` environment variable to the docker image
 gcloud projects add-iam-policy-binding $project_id \
   --role=roles/logging.logWriter \
-  --member=serviceAccount:micromanager@$project_id.iam.gserviceaccount.com
+  --member=serviceAccount:rpe-lib@$project_id.iam.gserviceaccount.com
 
 # Add policy required for enforcement
 ### I'm omitting this for security reasons. I recommend deciding what policies
@@ -93,7 +93,7 @@ gcloud projects add-iam-policy-binding $project_id \
 
 # Running OPA with our policies
 
-We'll be using the [Open Policy Agent](https://www.openpolicyagent.org/) docker image with policies located in a folder named _policy_. You can use your own policies as long as they match the schema used by Micromanager.
+We'll be using the [Open Policy Agent](https://www.openpolicyagent.org/) docker image with policies located in a folder named _policy_. You can use your own policies as long as they match the schema used by rpe-lib.
 
 ```shell
 docker run -d \
@@ -105,7 +105,7 @@ docker run -d \
 
 # Building our docker image
 
-The enforcement code is all in the `run.py` script in this directory. Stackdriver logs are parsed in `stackdriver.py` which attempts to extract the data we need to find a resource in the Google APIs. After we identify the resource we pass it to micromanager and iterate over the violations, remediating them one-at-a-time.
+The enforcement code is all in the `run.py` script in this directory. Stackdriver logs are parsed in `stackdriver.py` which attempts to extract the data we need to find a resource in the Google APIs. After we identify the resource we pass it to rpe-lib and iterate over the violations, remediating them one-at-a-time.
 
 A public docker image is available on dockerhub which you can use as-is if it suits your needs. Otherwise you can alter the code either run it directly or build your own container image to run.
 
@@ -124,11 +124,38 @@ This example uses the public image from Dockerhub, and should be altered if you 
 docker run -ti --rm \
     --link opa-server \
     -e PROJECT_ID=$project_id \
-    -e SUBSCRIPTION_NAME=micromanager \
+    -e SUBSCRIPTION_NAME=rpe-lib \
     -e OPA_URL="http://opa-server:8181/v1/data" \
     -e ENFORCE=true \
     -e STACKDRIVER_LOGGING=false \
-    -e GOOGLE_APPLICATION_CREDENTIALS=/opt/micromanager/etc/credentials.json \
-    -v <path_to_credentials_file>:/opt/micromanager/etc/credentials.json \
-    cleardata/forseti-policy-enforcer
+    -e GOOGLE_APPLICATION_CREDENTIALS=/opt/rpe-lib/etc/credentials.json \
+    -v <path_to_credentials_file>:/opt/rpe-lib/etc/credentials.json \
+    forsetisecurity/forseti-policy-enforcer
 ```
+
+## Adding resources from Stackdriver
+Add your resource type to the StackdriverLogParser [_extract_asset_info()](https://github.com/forseti-security/real-time-enforcer/blob/8531f53abd3a1ca02af6c2b852a8cc6a188987e1/app/parsers/stackdriver.py#L126) 
+function in order to filter for the correct AuditLog resource type message and 
+return relevant data about the resource that can be parsed.
+
+Below is an example that adds the `gke_nodepool` resource type, which returns a 
+dictionary, “resource_data”, that contains the user relevant properties from 
+the AuditLog of a `gke_nodepool` resource.
+
+```       
+elif res_type == "gke_nodepool":
+            resource_data = {
+                'resource_type': 'container.projects.locations.clusters.nodePools',
+                'cluster': prop("resource.labels.cluster_name"),
+                'name': prop("resource.labels.nodepool_name"),
+                'project_id': prop("resource.labels.project_id"),
+                'location': prop("resource.labels.location"),
+            }
+            add_resource()
+```
+
+Each resource that is then returned is evaluated against the list of available 
+policies and enforced if violations are found. These policies can be found in 
+the [resource-policy-evaluation-library Github repository](https://github.com/forseti-security/resource-policy-evaluation-library). 
+Refer to the Adding resources and policies for evaluation section there for 
+documentation on how to add new resources and policies for evaluation.
