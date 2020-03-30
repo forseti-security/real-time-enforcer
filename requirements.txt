@@ -1,5 +1,5 @@
 python-dateutil
-rpe-lib>=1.1.4
+rpe-lib>=1.1.5
 jmespath
 google-cloud-pubsub
 google-cloud-logging
