@@ -180,6 +180,7 @@ def callback(pubsub_message):
             pubsub_message.ack()
             continue
 
+        # TODO: If we fail here, we should still log everything so far
         try:
             violations = rpe.violations(resource)
         except Exception as e:
