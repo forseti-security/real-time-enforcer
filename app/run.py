@@ -71,7 +71,7 @@ rpeconfig = {
 rpe = RPE(rpeconfig)
 
 running_config = {
-    'configured_policies': rpe.get_configured_policies(),
+    'policies': rpe.policies(),
     'policy_enforcement': "enabled" if enforce_policy else "disabled",
     'stackdriver_logging': "enabled" if stackdriver_logging else "disabled",
     'enforcement_delay': enforcement_delay,
@@ -142,9 +142,9 @@ def callback(pubsub_message):
 
             # Set the resource's credentials before any API calls
             project_creds = cb.get_credentials(project_id=resource.project_id)
-            resource.client_kwargs = {
+            resource.client_kwargs.update({
                 'credentials': project_creds
-            }
+            })
 
             if per_project_logging:
                 project_logger = Logger(
@@ -157,39 +157,46 @@ def callback(pubsub_message):
         except Exception as e:
             logger({
                 'message_id': message_id,
-                'message': 'Internal failure in rpe-lib',
+                'message': 'Exception while getting credentials for resource',
+                'resource_data': resource.to_dict(),
                 **exc_info(e),
             })
             pubsub_message.ack()
             continue
 
-        logger.debug({'message_id': message_id, 'message': f'Evaluating resource for violations'})
-
-        # Fetch a list of policies and then violations.  The policy
-        # list is needed to log data about evaluated policies that are
-        # not violated by the current asset.
+        logger.debug({'message_id': message_id, 'message': f'Evaluating resource against policies'})
 
         try:
-            policies = rpe.policies(resource)
+            evaluations = rpe.evaluate(resource)
+            eval_time = int(time.time())
         except Exception as e:
             logger({
                 'message_id': message_id,
-                'message': 'Exception while retrieving policies',
+                'resource_data': resource.to_dict(),
+                'message': 'Exception while evaluating resource',
                 **exc_info(e),
             })
             pubsub_message.ack()
             continue
 
-        try:
-            violations = rpe.violations(resource)
-        except Exception as e:
-            logger(dict(
-                message='Exception while checking for violations',
-                **exc_info(e),
-            ))
-            continue
+        # Log the results of evaluations on each policy for this resource
+        for evaluation in evaluations:
+            evaluation_log = {
+                'compliant': evaluation.compliant,
+                'event': 'evaluation',
+                'excluded': evaluation.excluded,
+                'message_id': message_id,
+                'metadata': parsed_message.metadata.dict(),
+                'policy_id': evaluation.policy_id,
+                'remediable': evaluation.remediable,
+                'resource_data': resource.to_dict(),
+                'timestamp': eval_time,
+            }
 
-        logs = mklogs(message_id, parsed_message.metadata.dict(), resource, policies, violations)
+            logger(evaluation_log)
+
+            if per_project_logging:
+                project_logger(evaluation_log)
 
         if enforce_policy and parsed_message.control_data.enforce:
 
@@ -207,37 +214,43 @@ def callback(pubsub_message):
                 })
                 time.sleep(delay)
 
-            for (engine, violated_policy) in violations:
+            for evaluation in evaluations:
 
-                logger.debug({'message_id': message_id, 'message': f'Executing remediation'})
+                if not evaluation.compliant and evaluation.remediable:
+                    logger.debug({'message_id': message_id, 'message': f'Executing remediation'})
 
-                try:
-                    engine.remediate(resource, violated_policy)
-                    logs[violated_policy]['remediated'] = True
-                    logs[violated_policy]['remediated_at'] = int(time.time())
+                    try:
+                        evaluation.remediate()
+                        remediation_timestamp = int(time.time())
 
-                    if per_project_logging:
-                        project_log = {
+                        remediation_log = {
                             'event': 'remediation',
-                            'trigger_event': parsed_message.metadata.dict(),
+                            'message_id': message_id,
+                            'metadata': parsed_message.metadata.dict(),
+                            'policy_id': evaluation.policy_id,
                             'resource_data': resource.to_dict(),
-                            'policy': violated_policy,
+                            'timestamp': remediation_timestamp,
                         }
-                        project_logger(project_log)
 
-                except Exception as e:
-                    # Catch any other exceptions so we can acknowledge the message.
-                    # Otherwise they start to fill up the buffer of unacknowledged messages
-                    logger(dict(
-                        message='Execption while attempting to remediate',
-                        **exc_info(e),
-                    ))
+                        logger(remediation_log)
+
+                        if per_project_logging:
+                            project_logger(remediation_log)
+
+                    except Exception as e:
+                        # Catch any other exceptions so we can acknowledge the message.
+                        # Otherwise they start to fill up the buffer of unacknowledged messages
+                        logger(dict(
+                            message='Execption while attempting to remediate',
+                            message_id=message_id,
+                            metadata=parsed_message.metadata.dict(),
+                            policy_id=evaluation.policy_id,
+                            resource_data=resource.to_dict(),
+                            **exc_info(e),
+                        ))
 
         else:
             logger.debug({'message_id': message_id, 'message': 'Enforcement is disabled, processing complete'})
-
-        for policy in logs:
-            logger(logs[policy])
 
     # Finally ack the message after we're done with all of the assets
     pubsub_message.ack()
@@ -245,29 +258,10 @@ def callback(pubsub_message):
 
 def exc_info(exception):
     return {
+        'event': 'exception',
         'details': str(exception),
         'trace': traceback.format_exc(),
     }
-
-
-def mklogs(message_id, metadata, resource, policies, violations):
-    logs = {}
-    violated_policies = {y for x, y in violations}
-    evaluated_at = int(time.time())
-    resource_data = resource.to_dict()
-
-    for policy in policies:
-        logs[policy] = {
-            'message_id': message_id,
-            'policy': policy,
-            'resource_data': resource_data,
-            'violation': policy in violated_policies,
-            'evaluated_at': evaluated_at,
-            'remediated': False,  # will be updated after remediation occurs
-            'metadata': metadata,
-        }
-
-    return logs
 
 
 if __name__ == "__main__":
