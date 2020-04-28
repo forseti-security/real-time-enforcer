@@ -19,7 +19,7 @@ import pytest
 
 from app.parsers.stackdriver import StackdriverParser
 from google.oauth2.credentials import Credentials
-from rpe.resources import Resource
+from rpe.resources.gcp import GoogleAPIResource
 
 test_google_args = {
     'credentials': Credentials(token='bogus'),
@@ -40,36 +40,36 @@ def get_test_data(filename):
 # parameters for testing logs that should return a single asset
 test_single_asset_log_params = [
     # filename, expected_resource_type, expected_operation_type, expected_resource_name
-    ("app-engine-debug.json", "apps.services.versions.instances", "write", "aef-default-test-instance"),
-    ("bq-ds-set-iam-policy.json", "bigquery.datasets", "write", "wooo"),
-    ("bigtable-set-iam-policy.json", "bigtableadmin.projects.instances.iam", "write", "example-instance"),
-    ("pubsub-subscription-set-iam-policy.json", "pubsub.projects.subscriptions.iam", "write", "test-subscription"),
-    ("pubsub-topic-set-iam-policy.json", "pubsub.projects.topics.iam", "write", "test-topic"),
+    ("app-engine-debug.json", "appengine.googleapis.com/Instance", "write", "aef-default-test-instance"),
+    ("bq-ds-set-iam-policy.json", "bigquery.googleapis.com/Dataset", "write", "wooo"),
+    ("bigtable-set-iam-policy.json", "bigtableadmin.googleapis.com/Instance", "write", "example-instance"),
+    ("pubsub-subscription-set-iam-policy.json", "pubsub.googleapis.com/Subscription", "write", "test-subscription"),
+    ("pubsub-topic-set-iam-policy.json", "pubsub.googleapis.com/Topic", "write", "test-topic"),
 
     # CloudSQL logs are inconsistent. See https://issuetracker.google.com/issues/137629452
-    ("cloudsql-resource.labels.json", "sqladmin.instances", "write", "test-instance"),
-    ("cloudsql-protoPayload.request.body.json", "sqladmin.instances", "write", "test-instance"),
-    ("cloudsql-protoPayload.request.resource.instanceName.instanceId.json", "sqladmin.instances", "write", "test-instance"),
-    ("cloudfunctions-set-iam-policy.json", "cloudfunctions.projects.locations.functions.iam", "write", "example_function"),
-    ("compute-subnetworks-enable-flow-logs.json", "compute.subnetworks", "write", "example"),
-    ("compute-subnetworks-set-private-ip-google-access.json", "compute.subnetworks", "write", "example"),
-    ("compute-firewalls-enable-logs-policy.json", "compute.firewalls", "write", "test-firewall"),
-    ("compute-hardened-images.json", "compute.disks", "write", "test-instance"),
-    ("dataproc_createcluster.json", "dataproc.clusters", "write", "test-dataproc-cluster"),
-    ("gke-cluster-update.json", "container.projects.locations.clusters", "write", "example-cluster"),
-    ("gke-nodepool-set.json", "container.projects.locations.clusters.nodePools", "write", "example-pool"),
+    ("cloudsql-resource.labels.json", "sqladmin.googleapis.com/Instance", "write", "test-instance"),
+    ("cloudsql-protoPayload.request.body.json", "sqladmin.googleapis.com/Instance", "write", "test-instance"),
+    ("cloudsql-protoPayload.request.resource.instanceName.instanceId.json", "sqladmin.googleapis.com/Instance", "write", "test-instance"),
+    ("cloudfunctions-set-iam-policy.json", "cloudfunctions.googleapis.com/CloudFunction", "write", "example_function"),
+    ("compute-subnetworks-enable-flow-logs.json", "compute.googleapis.com/Subnetwork", "write", "example"),
+    ("compute-subnetworks-set-private-ip-google-access.json", "compute.googleapis.com/Subnetwork", "write", "example"),
+    ("compute-firewalls-enable-logs-policy.json", "compute.googleapis.com/Firewall", "write", "test-firewall"),
+    ("dataproc_createcluster.json", "dataproc.googleapis.com/Cluster", "write", "test-dataproc-cluster"),
+    ("gke-cluster-update.json", "container.googleapis.com/Cluster", "write", "example-cluster"),
+    ("gke-nodepool-set.json", "container.googleapis.com/NodePool", "write", "example-pool"),
 
-    ("servicemanagement-enable-service.json", "serviceusage.services", "write", "youtubeadsreach.googleapis.com"),
-    ("servicemanagement-disable-service.json", "serviceusage.services", "write", "youtubereporting.googleapis.com"),
-    ("servicemanagement-activate-service.json", "serviceusage.services", "write", "calendar-json.googleapis.com"),
-    ("servicemanagement-deactivate-service.json", "serviceusage.services", "write", "zync.googleapis.com"),
-    ("serviceusage-enable.json", "serviceusage.services", "write", "youtubereporting.googleapis.com"),
-    ("serviceusage-disable.json", "serviceusage.services", "write", "zync.googleapis.com"),
+    ("servicemanagement-enable-service.json", "serviceusage.googleapis.com/Service", "write", "youtubeadsreach.googleapis.com"),
+    ("servicemanagement-disable-service.json", "serviceusage.googleapis.com/Service", "write", "youtubereporting.googleapis.com"),
+    ("servicemanagement-activate-service.json", "serviceusage.googleapis.com/Service", "write", "calendar-json.googleapis.com"),
+    ("servicemanagement-deactivate-service.json", "serviceusage.googleapis.com/Service", "write", "zync.googleapis.com"),
+    ("serviceusage-enable.json", "serviceusage.googleapis.com/Service", "write", "youtubereporting.googleapis.com"),
+    ("serviceusage-disable.json", "serviceusage.googleapis.com/Service", "write", "zync.googleapis.com"),
 
 ]
 
 test_log_resource_count_params = [
-    ("serviceusage-batchenable.json", "serviceusage.services", "write", 3)
+    ("serviceusage-batchenable.json", 3),
+    ("compute-hardened-images.json", 2),
 ]
 
 @pytest.mark.parametrize(
@@ -97,18 +97,15 @@ def test_rpe_from_stackdriver_data(filename, expected_resource_type, expected_op
     assets = StackdriverParser._extract_asset_info(log_message)
     asset_info = assets[0]
 
-    Resource.factory('gcp', client_kwargs=test_google_args, **asset_info)
+    GoogleAPIResource.from_resource_data(client_kwargs=test_google_args, **asset_info)
 
 @pytest.mark.parametrize(
-    "filename,expected_resource_type,expected_operation_type,expected_resource_count",
+    "filename,expected_resource_count",
     test_log_resource_count_params
 )
-def test_log_resource_count(filename, expected_resource_type, expected_operation_type, expected_resource_count):
+def test_log_resource_count(filename, expected_resource_count):
     log_message = get_test_data(filename)
 
     assets = StackdriverParser._extract_asset_info(log_message)
     assert len(assets) == expected_resource_count
     asset_info = assets[0]
-
-    assert asset_info['resource_type'] == expected_resource_type
-    #assert asset_info['operation_type'] == expected_operation_type
