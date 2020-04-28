@@ -261,8 +261,19 @@ class StackdriverParser():
             add_resource()
 
         elif res_type == "gce_instance":
-            # gce instance return us result images whitch doesn't contains the source_image part.
-            # so we check source_image through the disk resource
+
+            resource_data = {
+                'resource_type': 'compute.googleapis.com/Instance',
+                'name': prop("protoPayload.resourceName").split('/')[-1],
+                'location': prop("resource.labels.zone"),
+                'project_id': prop("resource.labels.project_id"),
+            }
+
+            # Logs are sent for appengine instances, but the google api hides them and will return a 404
+            if not resource_data['name'].startswith('aef-'):
+                add_resource()
+
+            # Also add the disk as a resource since theres not a separate log message for these
             disk_name = prop("protoPayload.request.disks[?boot].diskName | [0]")
 
             resource_data = {
