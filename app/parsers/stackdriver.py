@@ -269,8 +269,10 @@ class StackdriverParser():
                 'project_id': prop("resource.labels.project_id"),
             }
 
-            # Logs are sent for appengine instances, but the google api hides them and will return a 404
-            if not resource_data['name'].startswith('aef-'):
+            # Logs are sent for some resources that are hidden by the compute API. We've found that some of these
+            # start with reserved prefixes. So if we see them we can safely assume we cant retrieve them
+            compute_reserved_prefixes = ('aef-', 'aet-')
+            if not resource_data['name'].startswith(compute_reserved_prefixes):
                 add_resource()
 
             # Also add the disk as a resource since theres not a separate log message for these
@@ -283,8 +285,7 @@ class StackdriverParser():
                 'project_id': prop("resource.labels.project_id"),
             }
 
-            # Logs are sent for appengine instances, but the google api hides them and will return a 404
-            if not resource_data['name'].startswith('aef-'):
+            if not resource_data['name'].startswith(compute_reserved_prefixes):
                 add_resource()
 
         elif res_type == "cloud_function":
