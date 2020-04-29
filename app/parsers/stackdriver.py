@@ -79,7 +79,7 @@ class StackdriverParser():
     def get_resources(cls, log_message):
         asset_info = cls._extract_asset_info(log_message)
 
-        return [GoogleAPIResource.factory(**i) for i in asset_info]
+        return [GoogleAPIResource.from_resource_data(**i) for i in asset_info]
 
     @classmethod
     def _operation_type(cls, message_data):
@@ -147,7 +147,7 @@ class StackdriverParser():
         if res_type == 'cloudsql_database' and method_name.startswith('cloudsql.instances'):
 
             resource_data = {
-                'resource_type': 'sqladmin.instances',
+                'resource_type': 'sqladmin.googleapis.com/Instance',
 
                 # CloudSQL logs are inconsistent. See https://issuetracker.google.com/issues/137629452
                 'name': (prop('resource.labels.database_id').split(':')[-1] or
@@ -159,23 +159,9 @@ class StackdriverParser():
             }
             add_resource()
 
-        elif res_type == "gcs_bucket" and method_name.startswith('storage.buckets'):
+        elif res_type == "gcs_bucket" and method_name.startswith(('storage.buckets', 'storage.setIamPermissions')):
             resource_data = {
-                'resource_type': 'storage.buckets',
-                'name': prop("resource.labels.bucket_name"),
-                'location': prop("resource.labels.location"),
-                'project_id': prop("resource.labels.project_id"),
-            }
-            add_resource()
-
-            # If ACLs are updated, they are scanned by the IAM scanner, but
-            # they come through as a bucket update, we need to return both resource types
-            resource_data['resource_type'] = 'storage.buckets.iam'
-            add_resource()
-
-        elif res_type == "gcs_bucket" and method_name == 'storage.setIamPermissions':
-            resource_data = {
-                'resource_type': 'storage.buckets.iam',
+                'resource_type': 'storage.googleapis.com/Bucket',
                 'name': prop("resource.labels.bucket_name"),
                 'location': prop("resource.labels.location"),
                 'project_id': prop("resource.labels.project_id"),
@@ -185,7 +171,7 @@ class StackdriverParser():
         elif res_type == "bigquery_dataset":
             if "DatasetService" in method_name or 'SetIamPolicy' in method_name:
                 resource_data = {
-                    'resource_type': 'bigquery.datasets',
+                    'resource_type': 'bigquery.googleapis.com/Dataset',
                     'name': prop("resource.labels.dataset_id"),
                     'project_id': prop("resource.labels.project_id"),
                 }
@@ -193,7 +179,7 @@ class StackdriverParser():
 
         elif res_type == "project" and method_name == 'SetIamPolicy':
             resource_data = {
-                'resource_type': 'cloudresourcemanager.projects.iam',
+                'resource_type': 'cloudresourcemanager.googleapis.com/Project',
                 'name': prop("resource.labels.project_id"),
                 'project_id': prop("resource.labels.project_id"),
             }
@@ -201,7 +187,7 @@ class StackdriverParser():
 
         elif res_type == "pubsub_subscription" and 'SetIamPolicy' in method_name:
             resource_data = {
-                'resource_type': 'pubsub.projects.subscriptions.iam',
+                'resource_type': 'pubsub.googleapis.com/Subscription',
                 'name': prop("resource.labels.subscription_id").split('/')[-1],
                 'project_id': prop("resource.labels.project_id"),
             }
@@ -209,7 +195,7 @@ class StackdriverParser():
 
         elif res_type == "pubsub_topic" and 'SetIamPolicy' in method_name:
             resource_data = {
-                'resource_type': 'pubsub.projects.topics.iam',
+                'resource_type': 'pubsub.googleapis.com/Topic',
                 'name': prop("resource.labels.topic_id").split('/')[-1],
                 'project_id': prop("resource.labels.project_id"),
             }
@@ -222,7 +208,7 @@ class StackdriverParser():
         ):
 
             resource_data = {
-                'resource_type': 'serviceusage.services',
+                'resource_type': 'serviceusage.googleapis.com/Service',
                 'project_id': prop("resource.labels.project_id"),
             }
 
@@ -240,7 +226,7 @@ class StackdriverParser():
 
         elif res_type == 'audited_resource' and 'DeactivateServices' in method_name:
             resource_data = {
-                'resource_type': 'serviceusage.services',
+                'resource_type': 'serviceusage.googleapis.com/Service',
                 'name': prop("resource.labels.service"),
                 'project_id': prop("resource.labels.project_id"),
             }
@@ -248,7 +234,7 @@ class StackdriverParser():
 
         elif res_type == "gce_subnetwork":
             resource_data = {
-                'resource_type': 'compute.subnetworks',
+                'resource_type': 'compute.googleapis.com/Subnetwork',
                 'name': prop("resource.labels.subnetwork_name"),
                 'project_id': prop("resource.labels.project_id"),
                 'location': prop("resource.labels.location"),
@@ -257,7 +243,7 @@ class StackdriverParser():
 
         elif res_type == "gce_firewall_rule":
             resource_data = {
-                'resource_type': 'compute.firewalls',
+                'resource_type': 'compute.googleapis.com/Firewall',
                 'name': prop("protoPayload.resourceName").split('/')[-1],
                 'project_id': prop("resource.labels.project_id"),
             }
@@ -266,7 +252,7 @@ class StackdriverParser():
         elif res_type == "gae_app" and 'DebugInstance' in method_name:
             instance_data = prop("protoPayload.resourceName").split('/')
             resource_data = {
-                'resource_type': 'apps.services.versions.instances',
+                'resource_type': 'appengine.googleapis.com/Instance',
                 'name': instance_data[-1],
                 'app': instance_data[1],
                 'service': instance_data[3],
@@ -275,19 +261,31 @@ class StackdriverParser():
             add_resource()
 
         elif res_type == "gce_instance":
-            # gce instance return us result images whitch doesn't contains the source_image part.
-            # so we check source_image through the disk resource
+
+            resource_data = {
+                'resource_type': 'compute.googleapis.com/Instance',
+                'name': prop("protoPayload.resourceName").split('/')[-1],
+                'location': prop("resource.labels.zone"),
+                'project_id': prop("resource.labels.project_id"),
+            }
+
+            # Logs are sent for some resources that are hidden by the compute API. We've found that some of these
+            # start with reserved prefixes. So if we see them we can safely assume we cant retrieve them
+            compute_reserved_prefixes = ('aef-', 'aet-')
+            if not resource_data['name'].startswith(compute_reserved_prefixes):
+                add_resource()
+
+            # Also add the disk as a resource since theres not a separate log message for these
             disk_name = prop("protoPayload.request.disks[?boot].diskName | [0]")
 
             resource_data = {
-                'resource_type': 'compute.disks',
+                'resource_type': 'compute.googleapis.com/Disk',
                 'name': disk_name or prop("protoPayload.resourceName").split('/')[-1],
                 'location': prop("resource.labels.zone"),
                 'project_id': prop("resource.labels.project_id"),
             }
 
-            # Logs are sent for appengine instances, but the google api hides them and will return a 404
-            if not resource_data['name'].startswith('aef-'):
+            if not resource_data['name'].startswith(compute_reserved_prefixes):
                 add_resource()
 
         elif res_type == "cloud_function":
@@ -295,20 +293,14 @@ class StackdriverParser():
                 'name': prop("resource.labels.function_name"),
                 'project_id': prop("resource.labels.project_id"),
                 'location': prop("resource.labels.region"),
-                'resource_type': 'cloudfunctions.projects.locations.functions',
+                'resource_type': 'cloudfunctions.googleapis.com/CloudFunction',
             }
 
-            if 'SetIamPolicy' in method_name:
-                resource_data['resource_type'] = 'cloudfunctions.projects.locations.functions.iam'
-            else:
-                resource_data['resource_type'] = 'cloudfunctions.projects.locations.functions'
-                add_resource()
-                resource_data['resource_type'] = 'cloudfunctions.projects.locations.functions.iam'
             add_resource()
 
         elif res_type == "cloud_dataproc_cluster":
             resource_data = {
-                'resource_type': 'dataproc.clusters',
+                'resource_type': 'dataproc.googleapis.com/Cluster',
                 'project_id': prop("resource.labels.project_id"),
                 'name': prop("resource.labels.cluster_name"),
                 'location': prop("resource.labels.region"),
@@ -317,7 +309,7 @@ class StackdriverParser():
 
         elif res_type == "gke_cluster":
             resource_data = {
-                'resource_type': 'container.projects.locations.clusters',
+                'resource_type': 'container.googleapis.com/Cluster',
                 'name': prop("resource.labels.cluster_name"),
                 'project_id': prop("resource.labels.project_id"),
                 'location': prop("resource.labels.location"),
@@ -326,7 +318,7 @@ class StackdriverParser():
 
             # add node pool resources for eval on new cluster creation
             if "create" in method_name.lower() and prop("protoPayload.request.cluster.nodePools") is not None:
-                resource_data['resource_type'] = 'container.projects.locations.clusters.nodePools'
+                resource_data['resource_type'] = 'container.googleapis.com/NodePool'
                 resource_data['cluster'] = prop("resource.labels.cluster_name")
                 for pool in prop("protoPayload.request.cluster.nodePools"):
                     resource_data['name'] = pool.get('name')
@@ -334,7 +326,7 @@ class StackdriverParser():
 
         elif res_type == "gke_nodepool":
             resource_data = {
-                'resource_type': 'container.projects.locations.clusters.nodePools',
+                'resource_type': 'container.googleapis.com/NodePool',
                 'cluster': prop("resource.labels.cluster_name"),
                 'name': prop("resource.labels.nodepool_name"),
                 'project_id': prop("resource.labels.project_id"),
@@ -342,24 +334,13 @@ class StackdriverParser():
             }
             add_resource()
 
-            # if nodepool image was updated, add cluster resource for re-evaluation
-            if "update" in method_name.lower():
-                resource_data['resource_type'] = 'container.projects.locations.clusters'
-                resource_data['name'] = prop("resource.labels.cluster_name")
-                add_resource()
-
         elif res_type == "audited_resource" and 'BigtableInstanceAdmin' in method_name:
             resource_data = {
                 'name': prop("protoPayload.resourceName").split('/')[-1],
                 'project_id': prop("resource.labels.project_id"),
             }
 
-            if 'SetIamPolicy' in method_name:
-                resource_data['resource_type'] = 'bigtableadmin.projects.instances.iam'
-            else:
-                resource_data['resource_type'] = 'bigtableadmin.projects.instances'
-                add_resource()
-                resource_data['resource_type'] = 'bigtableadmin.projects.instances.iam'
+            resource_data['resource_type'] = 'bigtableadmin.googleapis.com/Instance'
             add_resource()
 
         return resources
