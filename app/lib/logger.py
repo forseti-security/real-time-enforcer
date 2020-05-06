@@ -14,6 +14,7 @@
 
 
 import google.cloud.logging
+from google.protobuf import json_format
 
 
 class Logger:
@@ -32,7 +33,15 @@ class Logger:
     def __call__(self, data, severity='DEFAULT'):
         if self.stackdriver:
             if isinstance(data, dict):
-                self.sd_logger.log_struct(data, severity=severity)
+
+                try:
+                    self.sd_logger.log_struct(data, severity=severity)
+                except json_format.ParseError:
+                    # If our logs contain data that the google protobuf parser can't handle, let's try to fix it
+                    # The stackdriver client uses the protobuf json module, so we'll use that too
+                    data = json_format.json.loads(json_format.json.dumps(data, default=lambda o: str(o)))
+                    self.sd_logger.log_struct(data, severity=severity)
+
             else:
                 self.sd_logger.log_text(data, severity=severity)
 
