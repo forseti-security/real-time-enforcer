@@ -38,8 +38,6 @@ class EnforcementMessage(BaseModel):
 
 class CaiParser:
 
-    content_types = ['resource', 'iam']
-
     @classmethod
     def match(cls, message):
         try:
@@ -53,13 +51,6 @@ class CaiParser:
 
         m = EnforcementMessage(**message)
 
-        resources = []
-        for content_type in cls.content_types:
-            try:
-                resource = GoogleAPIResource.from_cai_data(m.name, m.asset_type, content_type, project_id=m.project_id)
-                resources.append(resource)
-            except ResourceException:
-                # Not all asset types support all content types
-                pass
+        resource = GoogleAPIResource.from_cai_data(m.name, m.asset_type, project_id=m.project_id)
 
-        return ParsedMessage(resources=resources, metadata=m.metadata, control_data=m.control_data)
+        return ParsedMessage(resources=[resource], metadata=m.metadata, control_data=m.control_data)
