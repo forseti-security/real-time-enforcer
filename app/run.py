@@ -216,7 +216,7 @@ def callback(pubsub_message):
 
             for evaluation in evaluations:
 
-                if not evaluation.compliant and evaluation.remediable:
+                if not (evaluation.compliant or evaluation.excluded) and evaluation.remediable:
                     logger.debug({'message_id': message_id, 'message': f'Executing remediation'})
 
                     try:
