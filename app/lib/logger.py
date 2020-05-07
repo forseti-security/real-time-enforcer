@@ -30,20 +30,30 @@ class Logger:
             client = google.cloud.logging.Client(project=project_id, credentials=credentials)
             self.sd_logger = client.logger(log_name)
 
+    def _safe_log_struct(self, data, severity):
+        ''' Log struct to stackdriver, but attempt to fix if we encounter a ParseError '''
+        try:
+            self.sd_logger.log_struct(data, severity=severity)
+        except json_format.ParseError:
+            # If our logs contain data that the google protobuf parser can't handle, let's try to fix it
+            # The stackdriver client uses the protobuf json module, so we'll use that too
+            data = json_format.json.loads(json_format.json.dumps(data, default=lambda o: str(o)))
+            self.sd_logger.log_struct(data, severity=severity)
+
     def __call__(self, data, severity='DEFAULT'):
         if self.stackdriver:
-            if isinstance(data, dict):
+            try:
 
-                try:
-                    self.sd_logger.log_struct(data, severity=severity)
-                except json_format.ParseError:
-                    # If our logs contain data that the google protobuf parser can't handle, let's try to fix it
-                    # The stackdriver client uses the protobuf json module, so we'll use that too
-                    data = json_format.json.loads(json_format.json.dumps(data, default=lambda o: str(o)))
-                    self.sd_logger.log_struct(data, severity=severity)
+                if isinstance(data, dict):
+                    self._safe_log_struct(data, severity)
 
-            else:
-                self.sd_logger.log_text(data, severity=severity)
+                else:
+                    self.sd_logger.log_text(data, severity=severity)
+
+            except Exception as e:
+                ''' If we cant log to stackdriver, log error and message to stdout '''
+                print(f'Error writing logs to stackdriver: {str(e)}')
+                print(data)
 
         else:
             print(data)
