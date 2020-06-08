@@ -4,9 +4,34 @@ The Forseti Real-Time Enforcer uses a Stackdriver log export (to a Pub/Sub topic
 
 [![Build Status](https://api.travis-ci.org/cleardataeng/forseti-policy-enforcer.svg?branch=master)](https://travis-ci.org/cleardataeng/forseti-policy-enforcer)
 
+## Configuration Options
+
+All configuration options are set as environment variables:
+
+**PROJECT_ID:** Required, the project_id for the project that contains the Pub/Sub subscription  
+**SUBSCRIPTION_NAME:** Required, the name of the Pub/Sub subscription  
+**OPA_URL:** Required, The base_url for the OPA instance to use for evaluations/remediations  
+
+**APP_NAME:** Optional, default=forseti-realtime-enforcer  
+**ENFORCE:** Optional, default=false. Whether or not to attempt to remediate policy violations (if supported by the policy)  
+**ENFORCEMENT_DELAY:** Optional, default=0. Number of seconds to delay enforcement before remediating a policy violation, useful if you use IaC tools that may get confused if resources are modified while they're operating on them.  
+**STACKDRIVER_LOGGING:** Optional, default=false. Whether to use stackdriver logging versus printing to stdout  
+**PER_PROJECT_LOGGING:** Optional, default=false. Whether to also send a log to the project containing the resource being evaluated or remediated. Only if STACKDRIVER_LOGGING is enabled  
+**DEBUG_LOGGING:** Optional, default=false. Whether or not to include debug log messages. These can be really chatty  
+
+### Pub/Sub Customization
+All of these are options, and any of these that are not set will default to the python Pub/Sub client's default values. More documentation on these can be found here: https://googleapis.dev/python/pubsub/latest/types.html
+
+**PUBSUB_MAX_MESSAGES:** The maximum number of received - but not yet processed - messages before pausing the message stream  
+**PUBSUB_MAX_BYTES:** The maximum total size of received - but not yet processed - messages before pausing the message stream  
+**PUBSUB_MAX_LEASE_DURATION:** The maximum amount of time in seconds to hold a lease on a message before dropping it from the lease management  
+
+# Deployment example
+
 This document will walk you through setting up a Stackdriver Log Export for your entire organization, filtering for AuditLog entries that create or update resources, and sending those log entries to a Pub/Sub topic. We will subscribe to that topic and evaluate each incoming log message and attempt to map it to a resource that [rpe-lib](https://github.com/forseti-security/resource-policy-evaluation-library) recognizes. If so, we'll evaluate it with rpe-lib against an [Open Policy Agent](https://www.openpolicyagent.org/) instance.
 
 If you prefer to operate on a specific folder or project, the log export commands in this document should be altered appropriately.
+
 
 ## Prerequisites
 
