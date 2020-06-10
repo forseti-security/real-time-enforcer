@@ -273,9 +273,23 @@ if __name__ == "__main__":
         sub=subscription_name
     )
 
+    # Build a dict of pubsub flow control settings from env vars if they're set
+    flow_control_config = {k: int(v) for k, v in dict(
+        max_messages=os.environ.get('PUBSUB_MAX_MESSAGES'),
+        max_bytes=os.environ.get('PUBSUB_MAX_BYTES'),
+        max_lease_duration=os.environ.get('PUBSUB_MAX_LEASE_DURATION'),
+    ).items() if v is not None}
+
+    flow_control = pubsub.types.FlowControl(
+        **flow_control_config
+    )
+
+    print(flow_control)
+
     future = subscriber.subscribe(
         subscription_path,
-        callback=callback
+        callback=callback,
+        flow_control=flow_control,
     )
 
     logger("Listening for pubsub messages on {}...".format(subscription_path))
