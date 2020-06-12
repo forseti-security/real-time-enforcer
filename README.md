@@ -11,6 +11,7 @@ All configuration options are set as environment variables:
 **PROJECT_ID:** Required, the project_id for the project that contains the Pub/Sub subscription  
 **SUBSCRIPTION_NAME:** Required, the name of the Pub/Sub subscription  
 **OPA_URL:** Required, The base_url for the OPA instance to use for evaluations/remediations  
+**PYTHON_POLICY_PATH:** Optional, The location of python policies to use. If using the docker image you can volume mount your policies. If they require additinal packages, you should use the docker image as your base image, and perform your setup in your Dockerfile
 
 **APP_NAME:** Optional, default=forseti-realtime-enforcer  
 **ENFORCE:** Optional, default=false. Whether or not to attempt to remediate policy violations (if supported by the policy)  
