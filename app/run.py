@@ -31,6 +31,7 @@ app_name = os.environ.get('APP_NAME', 'forseti-realtime-enforcer')
 project_id = os.environ.get('PROJECT_ID')
 subscription_name = os.environ.get('SUBSCRIPTION_NAME')
 opa_url = os.environ.get('OPA_URL')
+python_policy_path = os.environ.get('PYTHON_POLICY_PATH')
 enforce_policy = os.environ.get('ENFORCE', '').lower() == 'true'
 enforcement_delay = int(os.environ.get('ENFORCEMENT_DELAY', 0))
 stackdriver_logging = os.environ.get('STACKDRIVER_LOGGING', '').lower() == 'true'
@@ -68,6 +69,13 @@ rpeconfig = {
     ]
 }
 
+if python_policy_path is not None:
+    python_engine = {
+        'type': 'python',
+        'path': python_policy_path,
+    }
+    rpeconfig['policy_engines'].append(python_engine)
+
 rpe = RPE(rpeconfig)
 
 running_config = {
@@ -75,7 +83,8 @@ running_config = {
     'policy_enforcement': "enabled" if enforce_policy else "disabled",
     'stackdriver_logging': "enabled" if stackdriver_logging else "disabled",
     'enforcement_delay': enforcement_delay,
-    'debug_logging': "enabled" if debug_logging else "disabled"
+    'debug_logging': "enabled" if debug_logging else "disabled",
+    'python_policy_path': python_policy_path,
 }
 logger(running_config)
 
@@ -284,7 +293,7 @@ if __name__ == "__main__":
         **flow_control_config
     )
 
-    print(flow_control)
+    logger(flow_control)
 
     future = subscriber.subscribe(
         subscription_path,
