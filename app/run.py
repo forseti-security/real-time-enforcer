@@ -150,17 +150,20 @@ def callback(pubsub_message):
         try:
 
             # Set the resource's credentials before any API calls
-            project_creds = cb.get_credentials(project_id=resource.project_id)
+            resource_creds = cb.get_credentials(
+                **resource.to_dict(),
+            )
             resource.client_kwargs.update({
-                'credentials': project_creds
+                'credentials': resource_creds
             })
 
-            if per_project_logging:
+            project_logger = None
+            if per_project_logging and resource.project_id is not None:
                 project_logger = Logger(
                     app_name,
                     True,  # per-project logging is always stackdriver
                     resource.project_id,
-                    project_creds
+                    resource_creds
                 )
 
         except Exception as e:
@@ -204,7 +207,7 @@ def callback(pubsub_message):
 
             logger(evaluation_log)
 
-            if per_project_logging:
+            if project_logger is not None:
                 project_logger(evaluation_log)
 
         if enforce_policy and parsed_message.control_data.enforce:
@@ -243,7 +246,7 @@ def callback(pubsub_message):
 
                         logger(remediation_log)
 
-                        if per_project_logging:
+                        if project_logger is not None:
                             project_logger(remediation_log)
 
                     except Exception as e:
