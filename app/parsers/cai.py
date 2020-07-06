@@ -16,7 +16,6 @@
 from pydantic import BaseModel
 from pydantic import ValidationError
 from rpe.resources.gcp import GoogleAPIResource
-from rpe.exceptions import ResourceException
 from typing import Optional
 
 from .models import EnforcerControlData
