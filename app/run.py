@@ -153,9 +153,9 @@ def callback(pubsub_message):
             resource_creds = cb.get_credentials(
                 **resource.to_dict(),
             )
-            resource.client_kwargs.update({
+            resource.client_kwargs = {
                 'credentials': resource_creds
-            })
+            }
 
             project_logger = None
             if per_project_logging and resource.project_id is not None:
