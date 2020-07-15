@@ -170,6 +170,7 @@ def callback(pubsub_message):
             logger({
                 'message_id': message_id,
                 'message': 'Exception while getting credentials for resource',
+                'metadata': parsed_message.metadata.dict(),
                 'resource_data': resource.to_dict(),
                 **exc_info(e),
             })
@@ -186,6 +187,7 @@ def callback(pubsub_message):
                 'message_id': message_id,
                 'resource_data': resource.to_dict(),
                 'message': 'Exception while evaluating resource',
+                'metadata': parsed_message.metadata.dict(),
                 **exc_info(e),
             })
             pubsub_message.ack()
