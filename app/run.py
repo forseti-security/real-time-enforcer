@@ -38,6 +38,13 @@ stackdriver_logging = os.environ.get('STACKDRIVER_LOGGING', '').lower() == 'true
 per_project_logging = os.environ.get('PER_PROJECT_LOGGING', '').lower() == 'true'
 debug_logging = os.environ.get('DEBUG_LOGGING', '').lower() == 'true'
 
+# Build a dict of pubsub flow control settings from env vars if they're set
+flow_control_config = {k: int(v) for k, v in dict(
+    max_messages=os.environ.get('PUBSUB_MAX_MESSAGES'),
+    max_bytes=os.environ.get('PUBSUB_MAX_BYTES'),
+    max_lease_duration=os.environ.get('PUBSUB_MAX_LEASE_DURATION'),
+).items() if v is not None}
+
 # We're using the application default credentials, but defining them
 # explicitly so its easy to plug-in credentials using your own preferred
 # method
@@ -85,6 +92,7 @@ running_config = {
     'enforcement_delay': enforcement_delay,
     'debug_logging': "enabled" if debug_logging else "disabled",
     'python_policy_path': python_policy_path,
+    'flow_control_config': flow_control_config,
 }
 logger(running_config)
 
@@ -287,18 +295,9 @@ if __name__ == "__main__":
         sub=subscription_name
     )
 
-    # Build a dict of pubsub flow control settings from env vars if they're set
-    flow_control_config = {k: int(v) for k, v in dict(
-        max_messages=os.environ.get('PUBSUB_MAX_MESSAGES'),
-        max_bytes=os.environ.get('PUBSUB_MAX_BYTES'),
-        max_lease_duration=os.environ.get('PUBSUB_MAX_LEASE_DURATION'),
-    ).items() if v is not None}
-
     flow_control = pubsub.types.FlowControl(
         **flow_control_config
     )
-
-    logger(flow_control)
 
     future = subscriber.subscribe(
         subscription_path,
