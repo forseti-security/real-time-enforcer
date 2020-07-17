@@ -157,6 +157,12 @@ def callback(pubsub_message):
 
         try:
 
+            logger.debug({
+                'message_id': message_id,
+                'message': f'Processing resource',
+                'resource_data': resource.to_dict(),
+            })
+
             # Set the resource's credentials before any API calls
             resource_creds = cb.get_credentials(
                 **resource.to_dict(),
@@ -200,6 +206,9 @@ def callback(pubsub_message):
             })
             pubsub_message.ack()
             continue
+
+        if len(evaluations) < 1:
+            logger.debug({'message_id': message_id, 'message': f'No policies matched resource'})
 
         # Log the results of evaluations on each policy for this resource
         for evaluation in evaluations:
