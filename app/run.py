@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import os
 import time
 import traceback
@@ -101,17 +100,6 @@ def callback(pubsub_message):
 
     # We use the message ID in all logs we emit
     message_id = pubsub_message.message_id
-    message_timestamp = int(pubsub_message.publish_time.timestamp())
-
-    try:
-        message_data = json.loads(pubsub_message.data)
-    except (json.JSONDecodeError, AttributeError):
-        # We can't parse the log message, nothing to do here
-        logger.debug({'message_id': message_id, 'message': 'Failure loading json, discarding message'})
-        pubsub_message.ack()
-        return
-
-    logger.debug({'message_id': message_id, 'message': 'Received & decoded json message'})
 
     # Only one message parser should be able to parse a given message, lets capture which one it is
     parser_match = None
@@ -119,13 +107,13 @@ def callback(pubsub_message):
     for parser in message_parsers:
 
         try:
-            if not parser.match(message_data):
+            if not parser.match(pubsub_message):
                 logger.debug({'message_id': message_id, 'message': f'Message not matched by parser {parser.__name__}'})
                 continue
 
             logger.debug({'message_id': message_id, 'message': f'Message matched by parser {parser.__name__}'})
 
-            parsed_message = parser.parse_message(message_data)
+            parsed_message = parser.parse_message(pubsub_message)
             parser_match = parser
 
             if len(parsed_message.resources) == 0:

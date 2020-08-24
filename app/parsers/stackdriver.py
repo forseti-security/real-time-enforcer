@@ -15,7 +15,7 @@
 
 import dateutil.parser
 import jmespath
-import time
+import json
 from rpe.resources.gcp import GoogleAPIResource
 
 from .models import ParsedMessage
@@ -26,8 +26,14 @@ class StackdriverParser():
 
     @classmethod
     def match(cls, message):
-        log_type = jmespath.search('protoPayload."@type"', message)
-        log_name = message.get('logName', '')
+
+        try:
+            message_data = json.loads(message.data)
+        except (json.JSONDecodeError, AttributeError):
+            return False
+
+        log_type = jmespath.search('protoPayload."@type"', message_data)
+        log_name = message_data.get('logName', '')
 
         # normal activity logs have logName in this form:
         #  projects/<p>/logs/cloudaudit.googleapis.com%2Factivity
@@ -41,8 +47,10 @@ class StackdriverParser():
         ])
 
     @classmethod
-    def parse_message(cls, message_data):
+    def parse_message(cls, message):
 
+        message_data = json.loads(message.data)
+        publish_timestamp = int(message.publish_time.timestamp())
         metadata = cls._get_metadata(message_data)
 
         # Only return resources if something changed
@@ -50,18 +58,24 @@ class StackdriverParser():
         if metadata.get('operation') == 'write':
             resources = cls.get_resources(message_data)
 
-        return ParsedMessage(metadata=metadata, resources=resources)
+        return ParsedMessage(
+            metadata=metadata,
+            resources=resources,
+            timestamp=cls._get_timestamp(message_data) or publish_timestamp
+        )
+
+    @classmethod
+    def _get_timestamp(cls, message_data):
+        log_time_str = message_data.get('timestamp')
+        if log_time_str:
+            return int(dateutil.parser.parse(log_time_str).timestamp())
+
+        return None
 
     @classmethod
     def _get_metadata(cls, message_data):
         log_id = message_data.get('insertId', 'unknown-id')
-        log_time_str = message_data.get('timestamp')
-        if log_time_str:
-            log_timestamp = int(dateutil.parser.parse(log_time_str).timestamp())
-        else:
-            log_timestamp = int(time.time())
-
-        message_age = int(time.time()) - log_timestamp
+        log_timestamp = cls._get_timestamp(message_data)
 
         method_name = jmespath.search('protoPayload.methodName', message_data)
         operation_type = cls._operation_type(message_data)
@@ -71,7 +85,6 @@ class StackdriverParser():
             'timestamp': log_timestamp,
             'operation': operation_type,
             'method_name': method_name,
-            'message_age': message_age,
             'src': 'stackdriver-parser',
         }
 

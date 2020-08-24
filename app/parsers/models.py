@@ -12,9 +12,10 @@
 # limitations under the License.
 
 
+import time
 from typing import List
 from rpe.resources import Resource
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # Parser-supplied metadata is arbitrary, but some fields are required
@@ -38,6 +39,7 @@ class ParsedMessage(BaseModel):
     metadata: MessageMetadata
     resources: List[Resource]
     control_data: EnforcerControlData = EnforcerControlData()
+    timestamp: int = Field(default_factory=time.time)
 
     class Config:
         arbitrary_types_allowed = True
