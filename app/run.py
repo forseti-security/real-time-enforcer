@@ -147,7 +147,7 @@ def callback(pubsub_message):
 
             logger.debug({
                 'message_id': message_id,
-                'message': f'Processing resource',
+                'message': 'Processing resource',
                 'resource_data': resource.to_dict(),
             })
 
@@ -179,7 +179,7 @@ def callback(pubsub_message):
             pubsub_message.ack()
             continue
 
-        logger.debug({'message_id': message_id, 'message': f'Evaluating resource against policies'})
+        logger.debug({'message_id': message_id, 'message': 'Evaluating resource against policies'})
 
         try:
             evaluations = rpe.evaluate(resource)
@@ -196,7 +196,7 @@ def callback(pubsub_message):
             continue
 
         if len(evaluations) < 1:
-            logger.debug({'message_id': message_id, 'message': f'No policies matched resource'})
+            logger.debug({'message_id': message_id, 'message': 'No policies matched resource'})
 
         # Log the results of evaluations on each policy for this resource
         for evaluation in evaluations:
@@ -236,7 +236,7 @@ def callback(pubsub_message):
             for evaluation in evaluations:
 
                 if not (evaluation.compliant or evaluation.excluded) and evaluation.remediable:
-                    logger.debug({'message_id': message_id, 'message': f'Executing remediation'})
+                    logger.debug({'message_id': message_id, 'message': 'Executing remediation'})
 
                     try:
                         evaluation.remediate()
