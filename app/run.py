@@ -200,12 +200,22 @@ def callback(pubsub_message):
         if len(evaluations) < 1:
             logger.debug({'message_id': message_id, 'message': 'No policies matched resource'})
 
+        enforcements = []
+
         # Log the results of evaluations on each policy for this resource
         for evaluation in evaluations:
 
             # Call hook to allow for customization
             hooks.process_evaluation(evaluation, parsed_message)
 
+            # decide if we should remediate
+            decision = EnforcementDecision(evaluation, parsed_message)
+            hooks.process_enforcement_decision(decision, parsed_message)
+
+            if decision.enforce:
+                enforcements.append(decision)
+
+            print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
             evaluation_log = {
                 'compliant': evaluation.compliant,
                 'event': 'evaluation',
@@ -215,6 +225,8 @@ def callback(pubsub_message):
                 'policy_id': evaluation.policy_id,
                 'remediable': evaluation.remediable,
                 'resource_data': resource.to_dict(),
+                'enforce': decision.enforce,
+                'non_enforcement_conditions': decision.reasons,
                 'timestamp': eval_time,
             }
 
@@ -226,68 +238,41 @@ def callback(pubsub_message):
         # Skip all this if application-level enforcement is disabled
         if enforce_policy:
 
-            for evaluation in evaluations:
-                decision = EnforcementDecision(
-                    evaluation=evaluation
-                )
+            for enforcement in enforcements:
+                print(enforcement.reasons)
 
-                # Do we need to
-                if evaluation.compliant:
-                    decision.enforce = False
-                    decision.reasons.append('is_compliant')
+                delay(parsed_message)
+                logger.debug({'message_id': message_id, 'message': 'Executing remediation'})
 
-                # Is it excluded from enforcement
-                if evaluation.excluded:
-                    decision.enforce = False
-                    decision.reasons.append('is_excluded')
+                try:
+                    enforcement.evaluation.remediate()
+                    remediation_timestamp = int(time.time())
 
-                # Can we
-                if not evaluation.remediable:
-                    decision.enforce = False
-                    decision.reasons.append('is_not_remediable')
+                    remediation_log = {
+                        'event': 'remediation',
+                        'message_id': message_id,
+                        'metadata': parsed_message.metadata.dict(),
+                        'policy_id': enforcement.evaluation.policy_id,
+                        'resource_data': resource.to_dict(),
+                        'timestamp': remediation_timestamp,
+                    }
 
-                # Does the trigger indicate we shouldn't
-                if not parsed_message.control_data.enforce:
-                    decision.enforce = False
-                    decision.reasons.append('trigger_disabled')
+                    logger(remediation_log)
 
-                # Call hook to allow for customization
-                hooks.process_enforcement_decision(decision, parsed_message)
+                    if project_logger is not None:
+                        project_logger(remediation_log)
 
-                if decision.enforce:
-
-                    delay(parsed_message)
-                    logger.debug({'message_id': message_id, 'message': 'Executing remediation'})
-
-                    try:
-                        evaluation.remediate()
-                        remediation_timestamp = int(time.time())
-
-                        remediation_log = {
-                            'event': 'remediation',
-                            'message_id': message_id,
-                            'metadata': parsed_message.metadata.dict(),
-                            'policy_id': evaluation.policy_id,
-                            'resource_data': resource.to_dict(),
-                            'timestamp': remediation_timestamp,
-                        }
-
-                        logger(remediation_log)
-
-                        if project_logger is not None:
-                            project_logger(remediation_log)
-
-                    except Exception as e:
-                        # Catch any other exceptions so we can acknowledge the message.
-                        # Otherwise they start to fill up the buffer of unacknowledged messages
-                        logger(dict(
-                            message='Execption while attempting to remediate',
-                            message_id=message_id,
-                            metadata=parsed_message.metadata.dict(),
-                            policy_id=evaluation.policy_id,
-                            resource_data=resource.to_dict(),
-                            **exc_info(e),
-                        ))
+                except Exception as e:
+                    # Catch any other exceptions so we can acknowledge the message.
+                    # Otherwise they start to fill up the buffer of unacknowledged messages
+                    logger(dict(
+                        message='Execption while attempting to remediate',
+                        message_id=message_id,
+                        metadata=parsed_message.metadata.dict(),
+                        policy_id=evaluation.policy_id,
+                        resource_data=resource.to_dict(),
+                        **exc_info(e),
+                    ))
 
         else:
             logger.debug({'message_id': message_id, 'message': 'Enforcement is disabled, processing complete'})
