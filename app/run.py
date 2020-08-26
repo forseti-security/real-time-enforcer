@@ -24,6 +24,7 @@ from parsers.stackdriver import StackdriverParser
 from parsers.cai import CaiParser
 from lib.logger import Logger
 from lib.credentials import CredentialsBroker
+import hooks
 
 # Load configuration
 app_name = os.environ.get('APP_NAME', 'forseti-realtime-enforcer')
@@ -200,6 +201,10 @@ def callback(pubsub_message):
 
         # Log the results of evaluations on each policy for this resource
         for evaluation in evaluations:
+
+            # Call hook to allow for customization
+            hooks.process_evaluation(evaluation, parsed_message)
+
             evaluation_log = {
                 'compliant': evaluation.compliant,
                 'event': 'evaluation',
