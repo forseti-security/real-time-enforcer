@@ -24,6 +24,7 @@ from parsers.stackdriver import StackdriverParser
 from parsers.cai import CaiParser
 from lib.logger import Logger
 from lib.credentials import CredentialsBroker
+from lib.enforcement import EnforcementDecision
 import hooks
 
 # Load configuration
@@ -222,25 +223,40 @@ def callback(pubsub_message):
             if project_logger is not None:
                 project_logger(evaluation_log)
 
-        if enforce_policy and parsed_message.control_data.enforce:
-
-            if enforcement_delay and parsed_message.control_data.delay_enforcement:
-
-                delay_timestamp = parsed_message.metadata.timestamp or message_timestamp
-                message_age = int(time.time()) - delay_timestamp
-
-                # If the log is old, subtract that from the enforcement delay
-                delay = max(0, enforcement_delay - message_age)
-                logger.debug({
-                    'message_id': message_id,
-                    'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our'
-                               'configured delay is %d seconds' % (delay, message_age, enforcement_delay)
-                })
-                time.sleep(delay)
+        # Skip all this if application-level enforcement is disabled
+        if enforce_policy:
 
             for evaluation in evaluations:
+                decision = EnforcementDecision(
+                    evaluation=evaluation
+                )
 
-                if not (evaluation.compliant or evaluation.excluded) and evaluation.remediable:
+                # Do we need to
+                if evaluation.compliant:
+                    decision.enforce = False
+                    decision.reasons.append('is_compliant')
+
+                # Is it excluded from enforcement
+                if evaluation.excluded:
+                    decision.enforce = False
+                    decision.reasons.append('is_excluded')
+
+                # Can we
+                if not evaluation.remediable:
+                    decision.enforce = False
+                    decision.reasons.append('is_not_remediable')
+
+                # Does the trigger indicate we shouldn't
+                if not parsed_message.control_data.enforce:
+                    decision.enforce = False
+                    decision.reasons.append('trigger_disabled')
+
+                # Call hook to allow for customization
+                hooks.process_enforcement_decision(decision, parsed_message)
+
+                if decision.enforce:
+
+                    delay(parsed_message)
                     logger.debug({'message_id': message_id, 'message': 'Executing remediation'})
 
                     try:
@@ -278,6 +294,16 @@ def callback(pubsub_message):
 
     # Finally ack the message after we're done with all of the assets
     pubsub_message.ack()
+
+
+def delay(trigger):
+    global enforcement_delay
+
+    if enforcement_delay and trigger.control_data.delay_enforcement:
+
+        # If the log is old, subtract that from the enforcement delay
+        delay = max(0, enforcement_delay - trigger.age)
+        time.sleep(delay)
 
 
 def exc_info(exception):
