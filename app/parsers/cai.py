@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 
 from pydantic import BaseModel
 from pydantic import ValidationError
@@ -40,7 +41,12 @@ class CaiParser:
     @classmethod
     def match(cls, message):
         try:
-            EnforcementMessage(**message)
+            message_data = json.loads(message.data)
+        except (json.JSONDecodeError, AttributeError):
+            return False
+
+        try:
+            EnforcementMessage(**message_data)
             return True
         except ValidationError:
             return False
@@ -48,8 +54,16 @@ class CaiParser:
     @classmethod
     def parse_message(cls, message):
 
-        m = EnforcementMessage(**message)
+        message_data = json.loads(message.data)
+        publish_timestamp = int(message.publish_time.timestamp())
+
+        m = EnforcementMessage(**message_data)
 
         resource = GoogleAPIResource.from_cai_data(m.name, m.asset_type, project_id=m.project_id)
 
-        return ParsedMessage(resources=[resource], metadata=m.metadata, control_data=m.control_data)
+        return ParsedMessage(
+            resources=[resource],
+            metadata=m.metadata,
+            control_data=m.control_data,
+            timestamp=publish_timestamp,
+        )

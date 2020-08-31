@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import os
 import time
 import traceback
@@ -25,6 +24,8 @@ from parsers.stackdriver import StackdriverParser
 from parsers.cai import CaiParser
 from lib.logger import Logger
 from lib.credentials import CredentialsBroker
+from lib.enforcement import EnforcementDecision
+import hooks
 
 # Load configuration
 app_name = os.environ.get('APP_NAME', 'forseti-realtime-enforcer')
@@ -101,17 +102,6 @@ def callback(pubsub_message):
 
     # We use the message ID in all logs we emit
     message_id = pubsub_message.message_id
-    message_timestamp = int(pubsub_message.publish_time.timestamp())
-
-    try:
-        message_data = json.loads(pubsub_message.data)
-    except (json.JSONDecodeError, AttributeError):
-        # We can't parse the log message, nothing to do here
-        logger.debug({'message_id': message_id, 'message': 'Failure loading json, discarding message'})
-        pubsub_message.ack()
-        return
-
-    logger.debug({'message_id': message_id, 'message': 'Received & decoded json message'})
 
     # Only one message parser should be able to parse a given message, lets capture which one it is
     parser_match = None
@@ -119,13 +109,13 @@ def callback(pubsub_message):
     for parser in message_parsers:
 
         try:
-            if not parser.match(message_data):
+            if not parser.match(pubsub_message):
                 logger.debug({'message_id': message_id, 'message': f'Message not matched by parser {parser.__name__}'})
                 continue
 
             logger.debug({'message_id': message_id, 'message': f'Message matched by parser {parser.__name__}'})
 
-            parsed_message = parser.parse_message(message_data)
+            parsed_message = parser.parse_message(pubsub_message)
             parser_match = parser
 
             if len(parsed_message.resources) == 0:
@@ -159,7 +149,7 @@ def callback(pubsub_message):
 
             logger.debug({
                 'message_id': message_id,
-                'message': f'Processing resource',
+                'message': 'Processing resource',
                 'resource_data': resource.to_dict(),
             })
 
@@ -191,7 +181,7 @@ def callback(pubsub_message):
             pubsub_message.ack()
             continue
 
-        logger.debug({'message_id': message_id, 'message': f'Evaluating resource against policies'})
+        logger.debug({'message_id': message_id, 'message': 'Evaluating resource against policies'})
 
         try:
             evaluations = rpe.evaluate(resource)
@@ -208,10 +198,24 @@ def callback(pubsub_message):
             continue
 
         if len(evaluations) < 1:
-            logger.debug({'message_id': message_id, 'message': f'No policies matched resource'})
+            logger.debug({'message_id': message_id, 'message': 'No policies matched resource'})
+
+        enforcements = []
 
         # Log the results of evaluations on each policy for this resource
         for evaluation in evaluations:
+
+            # Call hook to allow for customization
+            hooks.process_evaluation(evaluation, parsed_message)
+
+            # decide if we should remediate
+            decision = EnforcementDecision(evaluation, parsed_message)
+            hooks.process_enforcement_decision(decision, parsed_message)
+
+            if decision.enforce:
+                enforcements.append(decision)
+
+            print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
             evaluation_log = {
                 'compliant': evaluation.compliant,
                 'event': 'evaluation',
@@ -221,6 +225,8 @@ def callback(pubsub_message):
                 'policy_id': evaluation.policy_id,
                 'remediable': evaluation.remediable,
                 'resource_data': resource.to_dict(),
+                'enforce': decision.enforce,
+                'non_enforcement_conditions': decision.reasons,
                 'timestamp': eval_time,
             }
 
@@ -229,62 +235,60 @@ def callback(pubsub_message):
             if project_logger is not None:
                 project_logger(evaluation_log)
 
-        if enforce_policy and parsed_message.control_data.enforce:
+        # Skip all this if application-level enforcement is disabled
+        if enforce_policy:
 
-            if enforcement_delay and parsed_message.control_data.delay_enforcement:
+            for enforcement in enforcements:
+                print(enforcement.reasons)
 
-                delay_timestamp = parsed_message.metadata.timestamp or message_timestamp
-                message_age = int(time.time()) - delay_timestamp
+                delay(parsed_message)
+                logger.debug({'message_id': message_id, 'message': 'Executing remediation'})
 
-                # If the log is old, subtract that from the enforcement delay
-                delay = max(0, enforcement_delay - message_age)
-                logger.debug({
-                    'message_id': message_id,
-                    'message': 'Delaying enforcement by %d seconds, message is already %d seconds old and our'
-                               'configured delay is %d seconds' % (delay, message_age, enforcement_delay)
-                })
-                time.sleep(delay)
+                try:
+                    enforcement.evaluation.remediate()
+                    remediation_timestamp = int(time.time())
 
-            for evaluation in evaluations:
+                    remediation_log = {
+                        'event': 'remediation',
+                        'message_id': message_id,
+                        'metadata': parsed_message.metadata.dict(),
+                        'policy_id': enforcement.evaluation.policy_id,
+                        'resource_data': resource.to_dict(),
+                        'timestamp': remediation_timestamp,
+                    }
 
-                if not (evaluation.compliant or evaluation.excluded) and evaluation.remediable:
-                    logger.debug({'message_id': message_id, 'message': f'Executing remediation'})
+                    logger(remediation_log)
 
-                    try:
-                        evaluation.remediate()
-                        remediation_timestamp = int(time.time())
+                    if project_logger is not None:
+                        project_logger(remediation_log)
 
-                        remediation_log = {
-                            'event': 'remediation',
-                            'message_id': message_id,
-                            'metadata': parsed_message.metadata.dict(),
-                            'policy_id': evaluation.policy_id,
-                            'resource_data': resource.to_dict(),
-                            'timestamp': remediation_timestamp,
-                        }
-
-                        logger(remediation_log)
-
-                        if project_logger is not None:
-                            project_logger(remediation_log)
-
-                    except Exception as e:
-                        # Catch any other exceptions so we can acknowledge the message.
-                        # Otherwise they start to fill up the buffer of unacknowledged messages
-                        logger(dict(
-                            message='Execption while attempting to remediate',
-                            message_id=message_id,
-                            metadata=parsed_message.metadata.dict(),
-                            policy_id=evaluation.policy_id,
-                            resource_data=resource.to_dict(),
-                            **exc_info(e),
-                        ))
+                except Exception as e:
+                    # Catch any other exceptions so we can acknowledge the message.
+                    # Otherwise they start to fill up the buffer of unacknowledged messages
+                    logger(dict(
+                        message='Execption while attempting to remediate',
+                        message_id=message_id,
+                        metadata=parsed_message.metadata.dict(),
+                        policy_id=evaluation.policy_id,
+                        resource_data=resource.to_dict(),
+                        **exc_info(e),
+                    ))
 
         else:
             logger.debug({'message_id': message_id, 'message': 'Enforcement is disabled, processing complete'})
 
     # Finally ack the message after we're done with all of the assets
     pubsub_message.ack()
+
+
+def delay(trigger):
+    global enforcement_delay
+
+    if enforcement_delay and trigger.control_data.delay_enforcement:
+
+        # If the log is old, subtract that from the enforcement delay
+        delay = max(0, enforcement_delay - trigger.age)
+        time.sleep(delay)
 
 
 def exc_info(exception):

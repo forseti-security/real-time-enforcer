@@ -185,3 +185,50 @@ policies and enforced if violations are found. These policies can be found in
 the [resource-policy-evaluation-library Github repository](https://github.com/forseti-security/resource-policy-evaluation-library). 
 Refer to the Adding resources and policies for evaluation section there for 
 documentation on how to add new resources and policies for evaluation.
+
+# Customization
+
+Real-time enforcer can be customized by replacing some components via volume mounts, or by building a new Docker image based on the public one. Below are some examples
+
+## Customizing an evaluation
+
+After running evaluations, we pass each evaluation through the `app.lib.hooks.process_evaluation` function. That function is also passed the ParsedMessage object (or the trigger for the evaluation). So if you'd like to perform some pre-processing on the evaluation, you can simply replace that function. Lets say you have defined your own function as follows:
+
+```python
+# file: evaluation_hook.py
+
+# An example evaluation hook that includes some possible uses
+def process_evaluation(evaluation, trigger):
+    r = evaluation.resource
+
+    # Mark all evaluations for my-exempt-project as excluded from enforcement
+    if r.project_id = 'my-exempt-project':
+        evaluation.excluded = True
+
+    # Mark all test resources as excluded from enforcement
+    if r.labels.get('environment') == 'test':
+        evaluation.excluded = True
+
+    # log some extra data for a specific policy
+    if evaluation.policy_id == 'compute_instances_fake_policy':
+        print('some log message')
+
+```
+
+You can then run the docker image with that file mounted via `docker run -v /path/to/evaluation_hook.py:/app/hooks/evaluation.py [...] forsetisecurity/real-time-enforcer:v1.0.12`
+
+## Customizing the enforcement decision
+
+Several things factor into whether or not a policy should be enforced (ex: app-level enforcement toggle, is the evaluation compliant or excluded, etc). Real-time enforcer also calls `apps.lib.hooks.process_enforcement_decision` which can be overridden in the same way as an evaluation.
+
+```python
+# file: enforcement_hook.py
+
+# An example enforcement hook
+def process_enforcement_decision(decision, trigger):
+    r = decision.evaluation.resource
+
+    # Prevent enforcement on a specific project
+    if r.project_id == 'my-no-enforcement-project':
+        decision.cancel('this project has enforcement disabled')
+```
