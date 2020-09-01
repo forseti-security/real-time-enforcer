@@ -215,7 +215,6 @@ def callback(pubsub_message):
             if decision.enforce:
                 enforcements.append(decision)
 
-            print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
             evaluation_log = {
                 'compliant': evaluation.compliant,
                 'event': 'evaluation',
@@ -239,7 +238,6 @@ def callback(pubsub_message):
         if enforce_policy:
 
             for enforcement in enforcements:
-                print(enforcement.reasons)
 
                 delay(parsed_message)
                 logger.debug({'message_id': message_id, 'message': 'Executing remediation'})
