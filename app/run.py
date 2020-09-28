@@ -267,7 +267,7 @@ def callback(pubsub_message):
                         message='Execption while attempting to remediate',
                         message_id=message_id,
                         metadata=parsed_message.metadata.dict(),
-                        policy_id=evaluation.policy_id,
+                        policy_id=enforcement.evaluation.policy_id,
                         resource_data=resource.to_dict(),
                         **exc_info(e),
                     ))
