@@ -102,6 +102,8 @@ def callback(pubsub_message):
 
     # We use the message ID in all logs we emit
     message_id = pubsub_message.message_id
+    message_publish_ts = pubsub_message.publish_time.timestamp()
+    message_receive_ts = time.time()
 
     # Only one message parser should be able to parse a given message, lets capture which one it is
     parser_match = None
@@ -142,6 +144,10 @@ def callback(pubsub_message):
         logger({'message_id': message_id, 'message': 'No parsers recognized the message format, discarding message'})
         pubsub_message.ack()
         return
+
+    # Inject some metadata we want for all messages
+    parsed_message.metadata['message_publish_timestamp'] = message_publish_ts
+    parsed_message.metadata['message_receive_timestamp'] = message_receive_ts
 
     for resource in parsed_message.resources:
 
@@ -227,6 +233,7 @@ def callback(pubsub_message):
                 'enforce': decision.enforce,
                 'non_enforcement_conditions': decision.reasons,
                 'timestamp': eval_time,
+                'age_from_publish': eval_time - message_publish_ts
             }
 
             logger(evaluation_log)
@@ -253,6 +260,7 @@ def callback(pubsub_message):
                         'policy_id': enforcement.evaluation.policy_id,
                         'resource_data': resource.to_dict(),
                         'timestamp': remediation_timestamp,
+                        'age_from_publish': remediation_timestamp - message_publish_ts
                     }
 
                     logger(remediation_log)
