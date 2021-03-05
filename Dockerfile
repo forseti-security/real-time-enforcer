@@ -4,7 +4,7 @@ COPY requirements.txt /app/
 
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -y dumb-init && \
+    apt-get install -y dumb-init git && \
     rm -rf /var/lib/apt/lists/* && \
     pip install -r /app/requirements.txt
 
