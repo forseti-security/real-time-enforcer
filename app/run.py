@@ -146,8 +146,8 @@ def callback(pubsub_message):
         return
 
     # Inject some metadata we want for all messages
-    parsed_message.metadata['message_publish_timestamp'] = message_publish_ts
-    parsed_message.metadata['message_receive_timestamp'] = message_receive_ts
+    parsed_message.metadata.message_publish_timestamp = message_publish_ts
+    parsed_message.metadata.message_receive_timestamp = message_receive_ts
 
     for resource in parsed_message.resources:
 
