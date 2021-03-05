@@ -1,4 +1,4 @@
-from python:slim
+from python:3.8-slim
 
 COPY requirements.txt /app/
 
