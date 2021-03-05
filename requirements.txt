@@ -1,5 +1,5 @@
 python-dateutil
-rpe-lib>=2.0.7,<3
+git+https://github.com/forseti-security/resource-policy-evaluation-library.git@v2.0.10#egg=rpe-lib
 jmespath
 google-cloud-pubsub
 google-cloud-logging
