@@ -25,6 +25,7 @@ from parsers.cai import CaiParser
 from lib.logger import Logger
 from lib.credentials import CredentialsBroker
 from lib.enforcement import EnforcementDecision
+from lib import metrics
 import hooks
 
 # Load configuration
@@ -38,6 +39,7 @@ enforcement_delay = int(os.environ.get('ENFORCEMENT_DELAY', 0))
 stackdriver_logging = os.environ.get('STACKDRIVER_LOGGING', '').lower() == 'true'
 per_project_logging = os.environ.get('PER_PROJECT_LOGGING', '').lower() == 'true'
 debug_logging = os.environ.get('DEBUG_LOGGING', '').lower() == 'true'
+metrics_enabled = os.environ.get('METRICS_ENABLED', '').lower() == 'true'
 
 # Build a dict of pubsub flow control settings from env vars if they're set
 flow_control_config = {k: int(v) for k, v in dict(
@@ -326,8 +328,14 @@ if __name__ == "__main__":
 
     logger("Listening for pubsub messages on {}...".format(subscription_path))
 
+    if metrics_enabled:
+        metrics_manager = metrics.Metrics(project_id, future, app_creds)
+
     try:
-        future.result()
+        while True:
+            time.sleep(60)
+            if metrics_enabled:
+                metrics_manager.submit_metrics()
     except Exception:
         future.cancel()
         raise
