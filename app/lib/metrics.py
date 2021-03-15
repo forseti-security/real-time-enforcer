@@ -23,7 +23,8 @@ from . import metadata
 
 
 class Metrics:
-    def __init__(self, project_id, subscription, credentials=None):
+    def __init__(self, app_name, project_id, subscription, credentials=None):
+        self.app_name = app_name
         self.project_id = project_id
         self.subscription = subscription
         self.client = monitoring_v3.MetricServiceClient(credentials=credentials)
@@ -60,7 +61,7 @@ class Metrics:
         metric_kind, value_type, and description.
 
         for example:
-        type_prefix = 'custom.googleapis.com/real-time-enforcer/wooo_app'
+        type_prefix = 'custom.googleapis.com/forseti-realtime-enforcer/wooo_app'
         descriptors = {
             'count_yeah': {
                 'metric_kind': ga_metric.MetricDescriptor.MetricKind.GAUGE,
@@ -70,11 +71,11 @@ class Metrics:
         }
 
         this will produce a gauge metric of integers, with type:
-        custom.googleapis.com/real-time-enforcer/wooo/count_yeah
+        custom.googleapis.com/forseti-realtime-enforcer/wooo/count_yeah
 
         '''
-        if not type_prefix.startswith('custom.googleapis.com/real-time-enforcer'):
-            raise ValueError('type_prefix must start with custom.googleapis.com/real-time-enforcer/')
+        if not type_prefix.startswith(f'custom.googleapis.com/{self.app_name}'):
+            raise ValueError(f'type_prefix must start with custom.googleapis.com/{self.app_name}/')
 
         if type_prefix.endswith('/'):
             raise ValueError('type_prefix must not end with a /')
@@ -112,7 +113,7 @@ class Metrics:
         }
 
         self._create_metric_descriptors(
-            'custom.googleapis.com/real-time-enforcer/pubsub_client',
+            f'custom.googleapis.com/{self.app_name}/pubsub_client',
             descriptors,
         )
 
@@ -154,7 +155,7 @@ class Metrics:
 
     def build_series(self, prefix, name, labels, details):
         s = monitoring_v3.types.TimeSeries()
-        s.metric.type = f'custom.googleapis.com/real-time-enforcer/{prefix}/{name}'
+        s.metric.type = f'custom.googleapis.com/{self.app_name}/{prefix}/{name}'
         s.resource.type = 'generic_task'
         s.resource.labels.update(labels)
 
@@ -213,8 +214,8 @@ class Metrics:
                 os.environ.get('PROJECT_ID'),
             ),
             'location': os.environ.get('METRICS_LOCATION', region),
-            'namespace': os.environ.get('METRICS_NAMESPACE', 'real-time-enforcer'),
-            'job': os.environ.get('METRICS_JOB_NAME', 'real-time-enforcer'),
+            'namespace': os.environ.get('METRICS_NAMESPACE', self.app_name),
+            'job': os.environ.get('METRICS_JOB_NAME', self.app_name),
             'task_id': os.environ.get('METRICS_TASK_ID', socket.gethostname()),
         }
 

@@ -32,14 +32,14 @@ All of these are options, and any of these that are not set will default to the 
 
 Real-Time Enforcer can optionally submit data on it's own operations
 to Cloud Monitoring.  The metrics are submitted as a generic task,
-using types with prefix `custom.googleapis.com/real-time-enforcer`.
+using types with prefix `custom.googleapis.com/forseti-realtime-enforcer`.
 The code tries to auto-discover reasonable labels, but you can control
 this via these environment variables:
 
 **METRICS_PROJECT_ID:** the project id for cloud monitoring, defaults to the value of `PROJECT_ID`.
 **METRICS_LOCATION:** the location of the Real-Time Enforcer, defaults to the region discovered from the compute metadata service.
-**METRICS_NAMESPACE:** a static string, defaults to `real-time-enforcer`.
-**METRICS_JOB_NAME:** a static string, defaults to `real-time-enforcer`.
+**METRICS_NAMESPACE:** a static string, defaults to the value of `APP_NAME`.
+**METRICS_JOB_NAME:** a static string, defaults to the value of `APP_NAME`.
 **METRICS_TASK_ID:** identifies individual copies of Real-Time Enforcer, defaults to the system hostname.
 
 # Deployment example

@@ -329,13 +329,13 @@ if __name__ == "__main__":
     logger("Listening for pubsub messages on {}...".format(subscription_path))
 
     if metrics_enabled:
-        metrics_manager = metrics.Metrics(project_id, future, app_creds)
+        metrics_mgr = metrics.Metrics(app_name, project_id, future, app_creds)
 
     try:
         while True:
             time.sleep(60)
             if metrics_enabled:
-                metrics_manager.submit_metrics()
+                metrics_mgr.submit_metrics()
     except Exception:
         future.cancel()
         raise
