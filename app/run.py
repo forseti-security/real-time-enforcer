@@ -332,10 +332,12 @@ if __name__ == "__main__":
         metrics_mgr = metrics.Metrics(app_name, project_id, future, app_creds)
 
     try:
-        while True:
-            time.sleep(60)
-            if metrics_enabled:
+        if metrics_enabled:
+            while True:
+                time.sleep(metrics_mgr.interval)
                 metrics_mgr.submit_metrics()
+        else:
+            future.result()
     except Exception:
         future.cancel()
         raise

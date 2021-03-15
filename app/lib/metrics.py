@@ -28,6 +28,7 @@ class Metrics:
         self.project_id = project_id
         self.subscription = subscription
         self.client = monitoring_v3.MetricServiceClient(credentials=credentials)
+        self.interval = int(os.environ.get('METRICS_REPORT_INTERVAL', 60))
 
         # labels won't change during one run, so build them once
         self.metric_labels = self.build_metric_labels()

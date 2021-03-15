@@ -41,6 +41,7 @@ this via these environment variables:
 **METRICS_NAMESPACE:** a static string, defaults to the value of `APP_NAME`.
 **METRICS_JOB_NAME:** a static string, defaults to the value of `APP_NAME`.
 **METRICS_TASK_ID:** identifies individual copies of Real-Time Enforcer, defaults to the system hostname.
+**METRICS_REPORT_INTERVAL:** an integer, how frequently should metrics be submitted to Cloud Monitoring, defaults to `60`.
 
 # Deployment example
 
