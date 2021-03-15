@@ -36,7 +36,6 @@ using types with prefix `custom.googleapis.com/forseti-realtime-enforcer`.
 The code tries to auto-discover reasonable labels, but you can control
 this via these environment variables:
 
-**METRICS_PROJECT_ID:** the project id for cloud monitoring, defaults to the value of `PROJECT_ID`.
 **METRICS_LOCATION:** the location of the Real-Time Enforcer, defaults to the region discovered from the compute metadata service.
 **METRICS_NAMESPACE:** a static string, defaults to the value of `APP_NAME`.
 **METRICS_JOB_NAME:** a static string, defaults to the value of `APP_NAME`.

@@ -202,7 +202,6 @@ class Metrics:
             region = None
 
         label_env_sources = {
-            'project_id': 'METRICS_PROJECT_ID',
             'location': 'METRICS_LOCATION',
             'namespace': 'METRICS_NAMESPACE',
             'job': 'METRICS_JOB_NAME',
@@ -210,10 +209,7 @@ class Metrics:
         }
 
         labels = {
-            'project_id': os.environ.get(
-                'METRICS_PROJECT_ID',
-                os.environ.get('PROJECT_ID'),
-            ),
+            'project_id': self.project_id,
             'location': os.environ.get('METRICS_LOCATION', region),
             'namespace': os.environ.get('METRICS_NAMESPACE', self.app_name),
             'job': os.environ.get('METRICS_JOB_NAME', self.app_name),
