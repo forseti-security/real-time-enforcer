@@ -24,7 +24,7 @@
     ],
     "request": {
       "job_id": "job-id",
-      "job_name": "templated",
+      "job_name": "job-name",
       "serviceAccount": "0000000000-compute@developer.gserviceaccount.com"
     },
     "response": {},

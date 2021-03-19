@@ -358,8 +358,8 @@ class StackdriverParser():
 
         elif res_type == "dataflow_step" and 'create' in method_name:
             resource_data = {
-                'jobId': prop("protoPayload.request.job_id"),
-                'projectId': prop("protoPayload.resource.labels.project_id"),
+                'name': prop("protoPayload.request.job_name"),
+                'project_id': prop("protoPayload.resource.labels.project_id"),
                 'location': prop("protoPayload.resource.labels.region"),
             }
 
