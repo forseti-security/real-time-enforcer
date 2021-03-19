@@ -357,8 +357,9 @@ class StackdriverParser():
             add_resource()
 
         elif res_type == "dataflow_step" and 'create' in method_name:
+            # The endpoint expects the job id instead of name
             resource_data = {
-                'name': prop("protoPayload.request.job_name"),
+                'name': prop("protoPayload.request.job_id"),
                 'project_id': prop("protoPayload.resource.labels.project_id"),
                 'location': prop("protoPayload.resource.labels.region"),
             }
