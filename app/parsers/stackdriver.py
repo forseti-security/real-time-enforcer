@@ -360,8 +360,8 @@ class StackdriverParser():
             # The endpoint expects the job id instead of name
             resource_data = {
                 'name': prop("protoPayload.request.job_id"),
-                'project_id': prop("protoPayload.resource.labels.project_id"),
-                'location': prop("protoPayload.resource.labels.region"),
+                'project_id': prop("resource.labels.project_id"),
+                'location': prop("resource.labels.region"),
             }
 
             resource_data['resource_type'] = 'dataflow.googleapis.com/Job'
