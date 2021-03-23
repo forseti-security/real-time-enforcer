@@ -2,7 +2,7 @@ python-dateutil
 rpe-lib==2.0.11
 jmespath
 google-cloud-pubsub
-google-cloud-logging
+google-cloud-logging==2.2.0
 google-cloud-monitoring
 google-auth
 # https://github.com/grpc/grpc/issues/24552
