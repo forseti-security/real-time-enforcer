@@ -1,0 +1,52 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "authenticationInfo": {
+      "principalEmail": "principalEmail@cleardata.com"
+    },
+    "requestMetadata": {
+      "callerIp": "69.420.13.37",
+      "requestAttributes": {
+        "time": "2021-03-18T20:19:14.968012858Z",
+        "auth": {}
+      },
+      "destinationAttributes": {}
+    },
+    "serviceName": "dataflow.googleapis.com",
+    "methodName": "dataflow.jobs.create",
+    "authorizationInfo": [
+      {
+        "resource": "projects/my-project",
+        "permission": "dataflow.jobs.create",
+        "granted": true,
+        "resourceAttributes": {}
+      }
+    ],
+    "request": {
+      "job_id": "job-id",
+      "job_name": "job-name",
+      "serviceAccount": "0000000000-compute@developer.gserviceaccount.com"
+    },
+    "response": {},
+    "resourceLocation": {
+      "currentLocations": [
+        "us-central1"
+      ]
+    }
+  },
+  "insertId": "1lzxdzfblc",
+  "resource": {
+    "type": "dataflow_step",
+    "labels": {
+      "step_id": "",
+      "region": "us-central1",
+      "project_id": "my-project",
+      "job_id": "",
+      "job_name": ""
+    }
+  },
+  "timestamp": "2021-03-18T20:19:14.963553594Z",
+  "severity": "NOTICE",
+  "logName": "projects/my-project/logs/cloudaudit.googleapis.com%2Factivity",
+  "receiveTimestamp": "2021-03-18T20:19:15.390745371Z"
+}

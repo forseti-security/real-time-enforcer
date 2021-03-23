@@ -19,6 +19,7 @@ All configuration options are set as environment variables:
 **STACKDRIVER_LOGGING:** Optional, default=false. Whether to use stackdriver logging versus printing to stdout  
 **PER_PROJECT_LOGGING:** Optional, default=false. Whether to also send a log to the project containing the resource being evaluated or remediated. Only if STACKDRIVER_LOGGING is enabled  
 **DEBUG_LOGGING:** Optional, default=false. Whether or not to include debug log messages. These can be really chatty  
+**METRICS_ENABLED:** Optional, default=false.  Whether or not to submit metrics to Cloud Monitoring.  See below for details.
 
 ### Pub/Sub Customization
 All of these are options, and any of these that are not set will default to the python Pub/Sub client's default values. More documentation on these can be found here: https://googleapis.dev/python/pubsub/latest/types.html
@@ -26,6 +27,20 @@ All of these are options, and any of these that are not set will default to the 
 **PUBSUB_MAX_MESSAGES:** The maximum number of received - but not yet processed - messages before pausing the message stream  
 **PUBSUB_MAX_BYTES:** The maximum total size of received - but not yet processed - messages before pausing the message stream  
 **PUBSUB_MAX_LEASE_DURATION:** The maximum amount of time in seconds to hold a lease on a message before dropping it from the lease management  
+
+### Cloud Monitoring Metrics
+
+Real-Time Enforcer can optionally submit data on it's own operations
+to Cloud Monitoring.  The metrics are submitted as a generic task,
+using types with prefix `custom.googleapis.com/forseti-realtime-enforcer`.
+The code tries to auto-discover reasonable labels, but you can control
+this via these environment variables:
+
+**METRICS_LOCATION:** the location of the Real-Time Enforcer, defaults to the region discovered from the compute metadata service.
+**METRICS_NAMESPACE:** a static string, defaults to the value of `APP_NAME`.
+**METRICS_JOB_NAME:** a static string, defaults to the value of `APP_NAME`.
+**METRICS_TASK_ID:** identifies individual copies of Real-Time Enforcer, defaults to the system hostname.
+**METRICS_REPORT_INTERVAL:** an integer, how frequently should metrics be submitted to Cloud Monitoring, defaults to `60`.
 
 # Deployment example
 

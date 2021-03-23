@@ -356,4 +356,15 @@ class StackdriverParser():
             resource_data['resource_type'] = 'bigtableadmin.googleapis.com/Instance'
             add_resource()
 
+        elif res_type == "dataflow_step" and 'create' in method_name:
+            # The endpoint expects the job id instead of name
+            resource_data = {
+                'name': prop("protoPayload.request.job_id"),
+                'project_id': prop("resource.labels.project_id"),
+                'location': prop("resource.labels.region"),
+            }
+
+            resource_data['resource_type'] = 'dataflow.googleapis.com/Job'
+            add_resource()
+
         return resources

@@ -64,6 +64,7 @@ test_single_asset_log_params = [
     ("servicemanagement-deactivate-service.json", "serviceusage.googleapis.com/Service", "write", "zync.googleapis.com"),
     ("serviceusage-enable.json", "serviceusage.googleapis.com/Service", "write", "youtubereporting.googleapis.com"),
     ("serviceusage-disable.json", "serviceusage.googleapis.com/Service", "write", "zync.googleapis.com"),
+    ("dataflow-job-step.json", "dataflow.googleapis.com/Job", "write", "job-id"),
 
 ]
 
