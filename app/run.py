@@ -232,6 +232,7 @@ def callback(pubsub_message):
                 'policy_id': evaluation.policy_id,
                 'remediable': evaluation.remediable,
                 'resource_data': resource.to_dict(),
+                'resource_labels': resource.labels,
                 'enforce': decision.enforce,
                 'non_enforcement_conditions': decision.reasons,
                 'timestamp': eval_time,
@@ -261,6 +262,7 @@ def callback(pubsub_message):
                         'metadata': parsed_message.metadata.dict(),
                         'policy_id': enforcement.evaluation.policy_id,
                         'resource_data': resource.to_dict(),
+                        'resource_labels': resource.labels,
                         'timestamp': remediation_timestamp,
                         'age_from_publish': remediation_timestamp - message_publish_ts
                     }
