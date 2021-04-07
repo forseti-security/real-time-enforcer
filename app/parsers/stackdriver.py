@@ -367,4 +367,14 @@ class StackdriverParser():
             resource_data['resource_type'] = 'dataflow.googleapis.com/Job'
             add_resource()
 
+        elif res_type == "audited_resource" and 'CloudRedis' in method_name:
+            resource_data = {
+                'name': prop("protoPayload.resourceName").split('/')[-1],
+                'project_id': prop("resource.labels.project_id"),
+                'location': prop("protoPayload.resourceLocation.currentLocations")[0],
+            }
+
+            resource_data['resource_type'] = 'redis.googleapis.com/Instance'
+            add_resource()
+
         return resources
