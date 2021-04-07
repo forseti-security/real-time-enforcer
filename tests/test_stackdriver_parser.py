@@ -65,10 +65,7 @@ test_single_asset_log_params = [
     ("serviceusage-enable.json", "serviceusage.googleapis.com/Service", "write", "youtubereporting.googleapis.com"),
     ("serviceusage-disable.json", "serviceusage.googleapis.com/Service", "write", "zync.googleapis.com"),
     ("dataflow-job-step.json", "dataflow.googleapis.com/Job", "write", "job-id"),
-<<<<<<< HEAD
-=======
     ("memorystore-redis.json", "redis.googleapis.com/Instance", "write", "test-instance"),
->>>>>>> b57fdb1... mend
 
 ]
 
