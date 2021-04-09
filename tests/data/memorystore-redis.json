@@ -1,0 +1,69 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "status": {},
+    "authenticationInfo": {
+      "principalEmail": "example@example.com"
+    },
+    "requestMetadata": {
+      "callerIp": "::1",
+      "callerSuppliedUserAgent": "",
+      "requestAttributes": {
+        "time": "2021-04-06T02:06:28.480329145Z",
+        "auth": {}
+      },
+      "destinationAttributes": {}
+    },
+    "serviceName": "redis.googleapis.com",
+    "methodName": "google.cloud.redis.v1.CloudRedis.CreateInstance",
+    "authorizationInfo": [
+      {
+        "resource": "projects/example-project/locations/us-central1/instances/test-instance",
+        "permission": "redis.instances.create",
+        "granted": true,
+        "resourceAttributes": {}
+      }
+    ],
+    "resourceName": "projects/example-project/locations/us-central1/instances/test-instance",
+    "request": {
+      "instance_id": "test-instance",
+      "instance": {
+        "auth_enabled": false,
+        "redis_version": "REDIS_5_0",
+        "authorized_network": "projects/example-project/global/networks/datalab-network",
+        "connect_mode": "PRIVATE_SERVICE_ACCESS",
+        "tier": "BASIC",
+        "memory_size_gb": 1,
+        "transit_encryption_mode": "SERVER_AUTHENTICATION"
+      },
+      "@type": "type.googleapis.com/google.cloud.redis.v1.CreateInstanceRequest",
+      "parent": "projects/example-project/locations/us-central1"
+    },
+    "response": {
+      "@type": "type.googleapis.com/google.longrunning.Operation"
+    },
+    "resourceLocation": {
+      "currentLocations": [
+        "us-central1"
+      ]
+    }
+  },
+  "insertId": "teysgnc46q",
+  "resource": {
+    "type": "audited_resource",
+    "labels": {
+      "service": "redis.googleapis.com",
+      "method": "google.cloud.redis.v1.CloudRedis.CreateInstance",
+      "project_id": "example-project"
+    }
+  },
+  "timestamp": "2021-04-06T02:06:29.528016514Z",
+  "severity": "NOTICE",
+  "logName": "projects/example-project/logs/cloudaudit.googleapis.com%2Factivity",
+  "operation": {
+    "id": "projects/example-project/locations/us-central1/operations/operation-1617674788493-5bf4443215a51-e11da1a5-c08be436",
+    "producer": "redis.googleapis.com",
+    "first": true
+  },
+  "receiveTimestamp": "2021-04-06T02:06:30.057990562Z"
+}
