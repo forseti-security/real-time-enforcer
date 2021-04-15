@@ -283,10 +283,13 @@ class StackdriverParser():
             }
 
             # Logs are sent for some resources that are hidden by the compute API. We've found that some of these
-            # start with reserved prefixes. So if we see them we can safely assume we cant retrieve them
+            # start with reserved prefixes. If the instance looks like a hidden resource, stop looking for
+            # resources and return immediately
             compute_reserved_prefixes = ('aef-', 'aet-')
-            if not resource_data['name'].startswith(compute_reserved_prefixes):
-                add_resource()
+            if resource_data['name'].startswith(compute_reserved_prefixes):
+                return resource
+
+            add_resource()
 
             # Also add disk resources since theres not a separate log message for these
             disk_names = prop('protoPayload.request.disks[*].initializeParams.diskName') or []
