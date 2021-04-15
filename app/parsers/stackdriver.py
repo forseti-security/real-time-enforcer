@@ -283,22 +283,26 @@ class StackdriverParser():
             }
 
             # Logs are sent for some resources that are hidden by the compute API. We've found that some of these
-            # start with reserved prefixes. So if we see them we can safely assume we cant retrieve them
+            # start with reserved prefixes. If the instance looks like a hidden resource, stop looking for
+            # resources and return immediately
             compute_reserved_prefixes = ('aef-', 'aet-')
-            if not resource_data['name'].startswith(compute_reserved_prefixes):
-                add_resource()
+            if resource_data['name'].startswith(compute_reserved_prefixes):
+                return resource
 
-            # Also add the disk as a resource since theres not a separate log message for these
-            disk_name = prop("protoPayload.request.disks[?boot].diskName | [0]")
+            add_resource()
 
-            resource_data = {
-                'resource_type': 'compute.googleapis.com/Disk',
-                'name': disk_name or prop("protoPayload.resourceName").split('/')[-1],
-                'location': prop("resource.labels.zone"),
-                'project_id': prop("resource.labels.project_id"),
-            }
+            # Also add disk resources since theres not a separate log message for these
+            disk_names = prop('protoPayload.request.disks[*].initializeParams.diskName') or []
 
-            if not resource_data['name'].startswith(compute_reserved_prefixes):
+            for disk_name in disk_names:
+
+                resource_data = {
+                    'resource_type': 'compute.googleapis.com/Disk',
+                    'name': disk_name,
+                    'location': prop("resource.labels.zone"),
+                    'project_id': prop("resource.labels.project_id"),
+                }
+
                 add_resource()
 
         elif res_type == "cloud_function":

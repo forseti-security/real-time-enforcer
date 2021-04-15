@@ -2,13 +2,13 @@
   "protoPayload": {
     "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
     "authenticationInfo": {
-      "principalEmail": "user@domain.com"
+      "principalEmail": "service-000000000000@gcp-sa-notebooks.iam.gserviceaccount.com"
     },
     "requestMetadata": {
-      "callerIp": "185.117.243.10",
-      "callerSuppliedUserAgent": "",
+      "callerIp": "2002:a17:90a:4285:b029:14f:f0e0:f4ce",
+      "callerSuppliedUserAgent": "google-api-go-client/0.5",
       "requestAttributes": {
-        "time": "2019-08-16T10:09:27.081Z",
+        "time": "2021-04-15T17:43:10.114288Z",
         "auth": {}
       },
       "destinationAttributes": {}
@@ -21,7 +21,7 @@
         "granted": true,
         "resourceAttributes": {
           "service": "compute",
-          "name": "projects/my_project/zones/my_zone/instances/test-instance",
+          "name": "projects/my-project/zones/us-west1-b/instances/my-instance",
           "type": "compute.instances"
         }
       },
@@ -30,7 +30,34 @@
         "granted": true,
         "resourceAttributes": {
           "service": "compute",
-          "name": "projects/my_project/zones/my_zone/disks/test-instance",
+          "name": "projects/my-project/zones/us-west1-b/disks/my-instance-boot",
+          "type": "compute.disks"
+        }
+      },
+      {
+        "permission": "compute.disks.setLabels",
+        "granted": true,
+        "resourceAttributes": {
+          "service": "compute",
+          "name": "projects/my-project/zones/us-west1-b/disks/my-instance-boot",
+          "type": "compute.disks"
+        }
+      },
+      {
+        "permission": "compute.disks.create",
+        "granted": true,
+        "resourceAttributes": {
+          "service": "compute",
+          "name": "projects/my-project/zones/us-west1-b/disks/my-instance-data",
+          "type": "compute.disks"
+        }
+      },
+      {
+        "permission": "compute.disks.setLabels",
+        "granted": true,
+        "resourceAttributes": {
+          "service": "compute",
+          "name": "projects/my-project/zones/us-west1-b/disks/my-instance-data",
           "type": "compute.disks"
         }
       },
@@ -39,7 +66,7 @@
         "granted": true,
         "resourceAttributes": {
           "service": "compute",
-          "name": "projects/my_project/regions/us-west1/subnetworks/default",
+          "name": "projects/my-project/regions/us-west1/subnetworks/default",
           "type": "compute.subnetworks"
         }
       },
@@ -48,7 +75,7 @@
         "granted": true,
         "resourceAttributes": {
           "service": "compute",
-          "name": "projects/my_project/regions/us-west1/subnetworks/default",
+          "name": "projects/my-project/regions/us-west1/subnetworks/default",
           "type": "compute.subnetworks"
         }
       },
@@ -57,16 +84,25 @@
         "granted": true,
         "resourceAttributes": {
           "service": "compute",
-          "name": "projects/my_project/zones/my_zone/instances/test-instance",
+          "name": "projects/my-project/zones/us-west1-b/instances/my-instance",
           "type": "compute.instances"
         }
       },
       {
-        "permission": "compute.instances.setDeletionProtection",
+        "permission": "compute.instances.setTags",
         "granted": true,
         "resourceAttributes": {
           "service": "compute",
-          "name": "projects/my_project/zones/my_zone/instances/test-instance",
+          "name": "projects/my-project/zones/us-west1-b/instances/my-instance",
+          "type": "compute.instances"
+        }
+      },
+      {
+        "permission": "compute.instances.setLabels",
+        "granted": true,
+        "resourceAttributes": {
+          "service": "compute",
+          "name": "projects/my-project/zones/us-west1-b/instances/my-instance",
           "type": "compute.instances"
         }
       },
@@ -75,96 +111,130 @@
         "granted": true,
         "resourceAttributes": {
           "service": "compute",
-          "name": "projects/my_project/zones/my_zone/instances/test-instance",
+          "name": "projects/my-project/zones/us-west1-b/instances/my-instance",
           "type": "compute.instances"
         }
       }
     ],
-    "resourceName": "projects/my_project/zones/my_zone/instances/test-instance",
+    "resourceName": "projects/my-project/zones/us-west1-b/instances/my-instance",
     "request": {
-      "deletionProtection": true,
+      "requestId": "bfe11378-6130-42d4-babb-82f697690ac8",
+      "machineType": "zones/us-west1-b/machineTypes/n1-standard-4",
+      "@type": "type.googleapis.com/compute.instances.insert",
       "serviceAccounts": [
         {
           "scopes": [
-            "https://www.googleapis.com/auth/devstorage.read_only",
-            "https://www.googleapis.com/auth/logging.write",
-            "https://www.googleapis.com/auth/monitoring.write",
-            "https://www.googleapis.com/auth/pubsub",
-            "https://www.googleapis.com/auth/service.management.readonly",
-            "https://www.googleapis.com/auth/servicecontrol",
-            "https://www.googleapis.com/auth/trace.append"
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/userinfo.email"
           ],
-          "email": "default"
+          "email": "compute-full@my-project.iam.gserviceaccount.com"
         }
       ],
-      "name": "test-instance",
-      "disks": [
-        {
-          "mode": "READ_WRITE",
-          "autoDelete": true,
-          "initializeParams": {
-            "sourceImage": "https://www.googleapis.com/compute/v1/projects/root_project/global/images/family/project-ubuntu-1804-lts"
-          },
-          "boot": true,
-          "type": "PERSISTENT"
-        }
-      ],
-      "@type": "type.googleapis.com/compute.instances.insert",
-      "machineType": "https://www.googleapis.com/compute/v1/projects/my_project/zones/my_zone/machineTypes/n1-standard-1",
-      "canIpForward": false,
-      "scheduling": {
-        "automaticRestart": true
+      "tags": {
+        "tags": [
+          "deeplearning-vm",
+          "notebook-instance"
+        ]
       },
+      "labels": [
+        {
+          "key": "goog-caip-notebook",
+          "value": ""
+        }
+      ],
+      "scheduling": {
+        "onHostMaintenance": "MIGRATE"
+      },
+      "name": "my-instance",
       "networkInterfaces": [
         {
-          "network": "https://www.googleapis.com/compute/v1/projects/my_project/global/networks/default",
+          "nicType": "UNSPECIFIED_NIC_TYPE",
+          "network": "projects/my-project/global/networks/default",
+          "subnetwork": "projects/my-project/regions/us-west1/subnetworks/default",
           "accessConfigs": [
             {
-              "name": "external-nat",
-              "type": "ONE_TO_ONE_NAT"
+              "type": "ONE_TO_ONE_NAT",
+              "name": "external-nat"
             }
           ]
+        }
+      ],
+      "disks": [
+        {
+          "type": "PERSISTENT",
+          "deviceName": "boot",
+          "autoDelete": true,
+          "boot": true,
+          "initializeParams": {
+            "diskType": "projects/my-project/zones/us-west1-b/diskTypes/pd-standard",
+            "sourceImage": "projects/deeplearning-platform-release/global/images/family/common-cpu-notebooks-debian-10",
+            "diskName": "my-instance-boot",
+            "labels": [
+              {
+                "key": "goog-caip-notebook-volume",
+                "value": ""
+              }
+            ],
+            "diskSizeGb": "100"
+          }
+        },
+        {
+          "type": "PERSISTENT",
+          "autoDelete": true,
+          "initializeParams": {
+            "diskType": "projects/my-project/zones/us-west1-b/diskTypes/pd-standard",
+            "diskSizeGb": "100",
+            "labels": [
+              {
+                "key": "goog-caip-notebook-volume",
+                "value": ""
+              }
+            ],
+            "diskName": "my-instance-data"
+          },
+          "deviceName": "data"
         }
       ]
     },
     "response": {
-      "name": "operation-000000000000-0000000000000-00000af-00000000",
-      "targetId": "000000000000000000",
-      "id": "000000000000000000",
-      "@type": "type.googleapis.com/operation",
-      "startTime": "0000-00-00T00:00:00.000-00:00",
-      "progress": "0",
-      "zone": "https://www.googleapis.com/compute/v1/projects/my_project/zones/my_zone",
-      "insertTime": "0000-00-00T00:00:00.000-00:00",
-      "user": "user@domain.com",
-      "selfLink": "https://www.googleapis.com/compute/v1/projects/my_project/zones/my_zone/operations/operation-0000000000000-0000000000000-00000000-00000000",
-      "targetLink": "https://www.googleapis.com/compute/v1/projects/my_project/zones/my_zone/instances/test-instance",
+      "insertTime": "2021-04-15T10:43:09.881-07:00",
       "operationType": "insert",
-      "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/my_project/zones/my_zone/operations/000000000000000000",
-      "status": "RUNNING"
+      "targetId": "4224659083998119362",
+      "targetLink": "https://www.googleapis.com/compute/v1/projects/my-project/zones/us-west1-b/instances/my-instance",
+      "name": "operation-1618508588353-5c0066579885a-833360e6-629e748b",
+      "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/my-project/zones/us-west1-b/operations/4053444786883249602",
+      "startTime": "2021-04-15T10:43:09.883-07:00",
+      "clientOperationId": "bfe11378-6130-42d4-babb-82f697690ac8",
+      "id": "4053444786883249602",
+      "status": "RUNNING",
+      "@type": "type.googleapis.com/operation",
+      "selfLink": "https://www.googleapis.com/compute/v1/projects/my-project/zones/us-west1-b/operations/operation-1618508588353-5c0066579885a-833360e6-629e748b",
+      "progress": "0",
+      "zone": "https://www.googleapis.com/compute/v1/projects/my-project/zones/us-west1-b",
+      "user": "service-000000000000@gcp-sa-notebooks.iam.gserviceaccount.com"
     },
     "resourceLocation": {
       "currentLocations": [
-        "my_zone"
+        "us-west1-b"
       ]
     }
   },
-  "insertId": "-9p0004do0000",
+  "insertId": "r78f6xe3o5bi",
   "resource": {
     "type": "gce_instance",
     "labels": {
-      "zone": "my_zone",
-      "project_id": "my_project",
-      "instance_id": "000000000000000000"
+      "zone": "us-west1-b",
+      "instance_id": "4224659083998119362",
+      "project_id": "my-project"
     }
   },
-  "timestamp": "0000-00-00T00:00:00.000Z",
+  "timestamp": "2021-04-15T17:43:08.405047Z",
   "severity": "NOTICE",
-  "logName": "projects/my_project/logs/cloudaudit.googleapis.com%2Factivity",
+  "logName": "projects/my-project/logs/cloudaudit.googleapis.com%2Factivity",
   "operation": {
-    "id": "operation-000000000000-0000000000000-00000af-00000000",
-    "producer": "type.googleapis.com",
+    "id": "operation-1618508588353-5c0066579885a-833360e6-629e748b",
+    "producer": "compute.googleapis.com",
     "first": true
   },
-  "receiveTimestamp": "0000-00-00T00:00:00.000Z"
+  "receiveTimestamp": "2021-04-15T17:43:10.665978926Z"
 }
