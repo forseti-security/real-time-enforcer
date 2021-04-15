@@ -289,7 +289,7 @@ class StackdriverParser():
                 add_resource()
 
             # Also add disk resources since theres not a separate log message for these
-            disk_names = prop('protoPayload.request.disks[*].initializeParams.diskName')
+            disk_names = prop('protoPayload.request.disks[*].initializeParams.diskName') or []
 
             for disk_name in disk_names:
 
