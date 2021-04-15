@@ -71,7 +71,7 @@ test_single_asset_log_params = [
 
 test_log_resource_count_params = [
     ("serviceusage-batchenable.json", 3),
-    ("compute-hardened-images.json", 2),
+    ("compute-hardened-images.json", 3),
 ]
 
 @pytest.mark.parametrize(
