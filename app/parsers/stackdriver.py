@@ -291,10 +291,6 @@ class StackdriverParser():
             # Also add disk resources since theres not a separate log message for these
             disk_names = prop('protoPayload.request.disks[*].initializeParams.diskName')
 
-            # If we failed to get the name of a disk from the logs, assume its the same as the instance
-            if not disk_names:
-                disk_names = [prop("protoPayload.resourceName").split('/')[-1]]
-
             for disk_name in disk_names:
 
                 resource_data = {
