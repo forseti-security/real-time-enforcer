@@ -288,17 +288,22 @@ class StackdriverParser():
             if not resource_data['name'].startswith(compute_reserved_prefixes):
                 add_resource()
 
-            # Also add the disk as a resource since theres not a separate log message for these
-            disk_name = prop("protoPayload.request.disks[?boot].diskName | [0]")
+            # Also add disk resources since theres not a separate log message for these
+            disk_names = prop('protoPayload.request.disks[*].initializeParams.diskName')
 
-            resource_data = {
-                'resource_type': 'compute.googleapis.com/Disk',
-                'name': disk_name or prop("protoPayload.resourceName").split('/')[-1],
-                'location': prop("resource.labels.zone"),
-                'project_id': prop("resource.labels.project_id"),
-            }
+            # If we failed to get the name of a disk from the logs, assume its the same as the instance
+            if not disk_names:
+                disk_names = [prop("protoPayload.resourceName").split('/')[-1]]
 
-            if not resource_data['name'].startswith(compute_reserved_prefixes):
+            for disk_name in disk_names:
+
+                resource_data = {
+                    'resource_type': 'compute.googleapis.com/Disk',
+                    'name': disk_name,
+                    'location': prop("resource.labels.zone"),
+                    'project_id': prop("resource.labels.project_id"),
+                }
+
                 add_resource()
 
         elif res_type == "cloud_function":
