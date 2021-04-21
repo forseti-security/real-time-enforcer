@@ -381,4 +381,15 @@ class StackdriverParser():
             resource_data['resource_type'] = 'redis.googleapis.com/Instance'
             add_resource()
 
+        elif res_type == "audited_resource" and prop('resource.labels.service') == 'datafusion.googleapis.com':
+            name_bits = prop('protoPayload.resourceName').split('/')
+            resource_data = {
+                'name': name_bits[5],
+                'project_id': name_bits[1],
+                'location': name_bits[3],
+                'resource_type': 'datafusion.googleapis.com/Instance',
+            }
+            add_resource()
+
+
         return resources

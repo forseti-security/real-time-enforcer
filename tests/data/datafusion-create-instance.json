@@ -1,0 +1,58 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "status": {},
+    "authenticationInfo": {
+      "principalEmail": "joe.ceresini@cleardata.com"
+    },
+    "requestMetadata": {
+      "callerIp": "::1",
+      "callerSuppliedUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:87.0) Gecko/20100101 Firefox/87.0,gzip(gfe),gzip(gfe)",
+      "requestAttributes": {
+        "time": "2021-04-21T13:42:07.054592956Z",
+        "auth": {}
+      },
+      "destinationAttributes": {}
+    },
+    "serviceName": "datafusion.googleapis.com",
+    "methodName": "google.cloud.datafusion.v1.DataFusion.CreateInstance",
+    "authorizationInfo": [
+      {
+        "resource": "projects/test-project/locations/us-west1/instances/test-instance",
+        "permission": "datafusion.instances.create",
+        "granted": true,
+        "resourceAttributes": {}
+      }
+    ],
+    "resourceName": "projects/test-project/locations/us-west1/instances/test-instance",
+    "request": {
+      "@type": "type.googleapis.com/google.cloud.datafusion.v1.CreateInstanceRequest"
+    },
+    "response": {
+      "@type": "type.googleapis.com/google.longrunning.Operation"
+    },
+    "resourceLocation": {
+      "currentLocations": [
+        "us-west1"
+      ]
+    }
+  },
+  "insertId": "1g69r0ld18a8",
+  "resource": {
+    "type": "audited_resource",
+    "labels": {
+      "project_id": "test-project",
+      "method": "google.cloud.datafusion.v1.DataFusion.CreateInstance",
+      "service": "datafusion.googleapis.com"
+    }
+  },
+  "timestamp": "2021-04-21T13:42:07.141616Z",
+  "severity": "NOTICE",
+  "logName": "projects/test-project/logs/cloudaudit.googleapis.com%2Factivity",
+  "operation": {
+    "id": "projects/test-project/locations/us-west1/operations/operation-1619012527071-5c07bba902145-73cd6799-4b75b165",
+    "producer": "datafusion.googleapis.com",
+    "first": true
+  },
+  "receiveTimestamp": "2021-04-21T13:42:08.102032180Z"
+}

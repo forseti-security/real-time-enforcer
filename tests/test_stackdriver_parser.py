@@ -55,6 +55,8 @@ test_single_asset_log_params = [
     ("compute-subnetworks-set-private-ip-google-access.json", "compute.googleapis.com/Subnetwork", "write", "example"),
     ("compute-firewalls-enable-logs-policy.json", "compute.googleapis.com/Firewall", "write", "test-firewall"),
     ("dataproc_createcluster.json", "dataproc.googleapis.com/Cluster", "write", "test-dataproc-cluster"),
+    ("datafusion-create-instance.json", "datafusion.googleapis.com/Instance", "create", "test-instance"),
+    ("datafusion-update-instance.json", "datafusion.googleapis.com/Instance", "write", "test-instance"),
     ("gke-cluster-update.json", "container.googleapis.com/Cluster", "write", "example-cluster"),
     ("gke-nodepool-set.json", "container.googleapis.com/NodePool", "write", "example-pool"),
 

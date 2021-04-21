@@ -1,0 +1,62 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "status": {},
+    "authenticationInfo": {
+      "principalEmail": "joe.ceresini@cleardata.com"
+    },
+    "requestMetadata": {
+      "callerIp": "::1",
+      "callerSuppliedUserAgent": "(gzip),gzip(gfe),gzip(gfe)",
+      "requestAttributes": {
+        "time": "2021-04-21T14:29:45.687025537Z",
+        "auth": {}
+      },
+      "destinationAttributes": {}
+    },
+    "serviceName": "datafusion.googleapis.com",
+    "methodName": "google.cloud.datafusion.v1beta1.DataFusion.UpdateInstance",
+    "authorizationInfo": [
+      {
+        "resource": "projects/test-project/locations/us-west1/instances/test-instance",
+        "permission": "datafusion.instances.update",
+        "granted": true,
+        "resourceAttributes": {}
+      }
+    ],
+    "resourceName": "projects/test-project/locations/us-west1/instances/test-instance",
+    "request": {
+      "instance": {
+        "enable_stackdriver_logging": true,
+        "name": "projects/test-project/locations/us-west1/instances/test-instance"
+      },
+      "@type": "type.googleapis.com/google.cloud.datafusion.v1beta1.UpdateInstanceRequest"
+    },
+    "response": {
+      "@type": "type.googleapis.com/google.longrunning.Operation"
+    },
+    "resourceLocation": {
+      "currentLocations": [
+        "us-west1"
+      ]
+    }
+  },
+  "insertId": "rr7kkmcwmc",
+  "resource": {
+    "type": "audited_resource",
+    "labels": {
+      "method": "google.cloud.datafusion.v1beta1.DataFusion.UpdateInstance",
+      "service": "datafusion.googleapis.com",
+      "project_id": "test-project"
+    }
+  },
+  "timestamp": "2021-04-21T14:29:45.751408435Z",
+  "severity": "NOTICE",
+  "logName": "projects/test-project/logs/cloudaudit.googleapis.com%2Factivity",
+  "operation": {
+    "id": "projects/test-project/locations/us-west1/operations/operation-1619015385689-5c07c64f32eba-f4b8056e-3f7c0908",
+    "producer": "datafusion.googleapis.com",
+    "first": true
+  },
+  "receiveTimestamp": "2021-04-21T14:29:46.085095772Z"
+}
