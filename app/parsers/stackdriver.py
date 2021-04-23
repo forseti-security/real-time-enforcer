@@ -275,9 +275,11 @@ class StackdriverParser():
 
         elif res_type == "gce_instance":
 
+            instance_name = prop('protoPayload.resourceName').split('/')[-1]
+
             resource_data = {
                 'resource_type': 'compute.googleapis.com/Instance',
-                'name': prop("protoPayload.resourceName").split('/')[-1],
+                'name': instance_name,
                 'location': prop("resource.labels.zone"),
                 'project_id': prop("resource.labels.project_id"),
             }
@@ -292,13 +294,23 @@ class StackdriverParser():
             add_resource()
 
             # Also add disk resources since theres not a separate log message for these
-            disk_names = prop('protoPayload.request.disks[*].initializeParams.diskName') or []
+            disks = prop('protoPayload.request.disks') or []
 
-            for disk_name in disk_names:
+            for disk in disks:
+
+                # The name of the disk is complicated. If the diskName is set in initParams use that
+                # If not AND its the boot disk, use the instance name
+                # Otherwise use the device name
+
+                disk_name = jmespath.search('initializeParams.diskName', disk)
+                device_name = jmespath.search('deviceName', disk)
+                boot = jmespath.search('boot', disk)
+
+                actual_disk_name = disk_name or (boot and instance_name) or device_name
 
                 resource_data = {
                     'resource_type': 'compute.googleapis.com/Disk',
-                    'name': disk_name,
+                    'name': actual_disk_name,
                     'location': prop("resource.labels.zone"),
                     'project_id': prop("resource.labels.project_id"),
                 }
