@@ -2,7 +2,7 @@
 
 The Forseti Real-Time Enforcer uses a Stackdriver log export (to a Pub/Sub topic) to trigger policy evaluation and enforcement
 
-[![Build Status](https://api.travis-ci.org/cleardataeng/forseti-policy-enforcer.svg?branch=master)](https://travis-ci.org/cleardataeng/forseti-policy-enforcer)
+[![Build Status](https://github.com/cleardataeng/real-time-enforcer/actions/workflows/build.yml/badge.svg)](https://github.com/cleardataeng/real-time-enforcer/actions/workflows/build.yml)
 
 ## Configuration Options
 
