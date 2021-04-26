@@ -287,7 +287,7 @@ class StackdriverParser():
             # resources and return immediately
             compute_reserved_prefixes = ('aef-', 'aet-')
             if resource_data['name'].startswith(compute_reserved_prefixes):
-                return resource
+                return resources
 
             add_resource()
 
