@@ -19,7 +19,7 @@ import pytest
 
 from app.parsers.stackdriver import StackdriverParser
 from google.oauth2.credentials import Credentials
-from rpe.resources.gcp import GoogleAPIResource
+from rpe.resources.gcp import GoogleAPIResource, GcpComputeDisk
 
 test_google_args = {
     'credentials': Credentials(token='bogus'),
@@ -113,3 +113,27 @@ def test_log_resource_count(filename, expected_resource_count):
     assets = StackdriverParser._extract_asset_info(log_message)
     assert len(assets) == expected_resource_count
     asset_info = assets[0]
+
+@pytest.mark.parametrize(
+    'filename,expected_disk_names',
+    [
+        ('compute_instance_creation_logs_1.json', ['console-devicenames', 'disk2name']),
+        ('compute_instance_creation_logs_2.json', []),
+        ('compute_instance_creation_logs_3.json', ['console-nochange']),
+        ('compute_instance_creation_logs_4.json', ['gcloud-devicename-mismatch']),
+        ('compute_instance_creation_logs_5.json', ['demo-testing-good-boot', 'demo-testing-good-data']),
+    ]
+
+)
+def test_compute_instance_logs_get_disk_names(filename, expected_disk_names):
+    '''
+        Instance creation audit logs contain details about the disks, but extracting the disk name is
+        complicated. This tests multiple known log formats for instance creation against expected disk names.
+    '''
+
+    log = get_test_data(filename)
+
+    assets = StackdriverParser._extract_asset_info(log)
+
+    disk_names = [asset['name'] for asset in assets if asset['resource_type'] == GcpComputeDisk.resource_type]
+    assert sorted(disk_names) == sorted(expected_disk_names)

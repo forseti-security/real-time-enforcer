@@ -1,0 +1,36 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "authenticationInfo": {
+      "principalEmail": "test.user@cleardata.com"
+    },
+    "requestMetadata": {
+      "callerIp": "76.98.160.101",
+      "callerSuppliedUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:88.0) Gecko/20100101 Firefox/88.0,gzip(gfe),gzip(gfe)"
+    },
+    "serviceName": "compute.googleapis.com",
+    "methodName": "beta.compute.instances.insert",
+    "resourceName": "projects/test-project/zones/us-central1-a/instances/console-devicenames",
+    "request": {
+      "@type": "type.googleapis.com/compute.instances.insert"
+    }
+  },
+  "insertId": "k9bodhd531s",
+  "resource": {
+    "type": "gce_instance",
+    "labels": {
+      "zone": "us-central1-a",
+      "project_id": "test-project",
+      "instance_id": "1515444269730406258"
+    }
+  },
+  "timestamp": "2021-04-23T19:36:05.525118Z",
+  "severity": "NOTICE",
+  "logName": "projects/test-project/logs/cloudaudit.googleapis.com%2Factivity",
+  "operation": {
+    "id": "operation-1619206556904-5c0a8e7a46b69-07d8da26-0d3c1532",
+    "producer": "compute.googleapis.com",
+    "last": true
+  },
+  "receiveTimestamp": "2021-04-23T19:36:06.110416993Z"
+}
