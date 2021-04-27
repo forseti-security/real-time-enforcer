@@ -1,0 +1,118 @@
+{
+  "protoPayload": {
+    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
+    "authenticationInfo": {
+      "principalEmail": "service-974894326962@gcp-sa-notebooks.iam.gserviceaccount.com"
+    },
+    "requestMetadata": {},
+    "serviceName": "compute.googleapis.com",
+    "methodName": "v1.compute.instances.insert",
+    "resourceName": "projects/test-project/zones/us-west1-b/instances/demo-testing-good",
+    "request": {
+      "requestId": "bfe11378-6130-42d4-babb-82f697690ac8",
+      "machineType": "zones/us-west1-b/machineTypes/n1-standard-4",
+      "@type": "type.googleapis.com/compute.instances.insert",
+      "serviceAccounts": [
+        {
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/userinfo.email"
+          ],
+          "email": "compute-full@test-project.iam.gserviceaccount.com"
+        }
+      ],
+      "tags": {
+        "tags": [
+          "deeplearning-vm",
+          "notebook-instance"
+        ]
+      },
+      "labels": [
+        {
+          "key": "goog-caip-notebook",
+          "value": ""
+        }
+      ],
+      "scheduling": {
+        "onHostMaintenance": "MIGRATE"
+      },
+      "name": "demo-testing-good",
+      "disks": [
+        {
+          "type": "PERSISTENT",
+          "deviceName": "boot",
+          "autoDelete": true,
+          "boot": true,
+          "initializeParams": {
+            "diskType": "projects/test-project/zones/us-west1-b/diskTypes/pd-standard",
+            "sourceImage": "projects/deeplearning-platform-release/global/images/family/common-cpu-notebooks-debian-10",
+            "diskName": "demo-testing-good-boot",
+            "labels": [
+              {
+                "key": "goog-caip-notebook-volume",
+                "value": ""
+              }
+            ],
+            "diskSizeGb": "100"
+          }
+        },
+        {
+          "type": "PERSISTENT",
+          "autoDelete": true,
+          "initializeParams": {
+            "diskType": "projects/test-project/zones/us-west1-b/diskTypes/pd-standard",
+            "diskSizeGb": "100",
+            "labels": [
+              {
+                "key": "goog-caip-notebook-volume",
+                "value": ""
+              }
+            ],
+            "diskName": "demo-testing-good-data"
+          },
+          "deviceName": "data"
+        }
+      ]
+    },
+    "response": {
+      "insertTime": "2021-04-15T10:43:09.881-07:00",
+      "operationType": "insert",
+      "targetId": "4224659083998119362",
+      "targetLink": "https://www.googleapis.com/compute/v1/projects/test-project/zones/us-west1-b/instances/demo-testing-good",
+      "name": "operation-1618508588353-5c0066579885a-833360e6-629e748b",
+      "selfLinkWithId": "https://www.googleapis.com/compute/v1/projects/test-project/zones/us-west1-b/operations/4053444786883249602",
+      "startTime": "2021-04-15T10:43:09.883-07:00",
+      "clientOperationId": "bfe11378-6130-42d4-babb-82f697690ac8",
+      "id": "4053444786883249602",
+      "status": "RUNNING",
+      "@type": "type.googleapis.com/operation",
+      "selfLink": "https://www.googleapis.com/compute/v1/projects/test-project/zones/us-west1-b/operations/operation-1618508588353-5c0066579885a-833360e6-629e748b",
+      "progress": "0",
+      "zone": "https://www.googleapis.com/compute/v1/projects/test-project/zones/us-west1-b",
+      "user": "service-974894326962@gcp-sa-notebooks.iam.gserviceaccount.com"
+    },
+    "resourceLocation": {
+      "currentLocations": [
+        "us-west1-b"
+      ]
+    }
+  },
+  "insertId": "r78f6xe3o5bi",
+  "resource": {
+    "type": "gce_instance",
+    "labels": {
+      "zone": "us-west1-b",
+      "instance_id": "4224659083998119362",
+      "project_id": "test-project"
+    }
+  },
+  "timestamp": "2021-04-15T17:43:08.405047Z",
+  "severity": "NOTICE",
+  "logName": "projects/test-project/logs/cloudaudit.googleapis.com%2Factivity",
+  "operation": {
+    "id": "operation-1618508588353-5c0066579885a-833360e6-629e748b",
+    "producer": "compute.googleapis.com",
+    "first": true
+  },
+  "receiveTimestamp": "2021-04-15T17:43:10.665978926Z"
+}
