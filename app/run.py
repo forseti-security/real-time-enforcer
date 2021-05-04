@@ -334,12 +334,18 @@ if __name__ == "__main__":
         metrics_mgr = metrics.Metrics(app_name, project_id, future, app_creds)
 
     try:
+
+        # If we're submitting metrics, loop/submit/sleep until the subscriber exits
         if metrics_enabled:
-            while True:
+            while not future.done():
                 time.sleep(metrics_mgr.interval)
                 metrics_mgr.submit_metrics()
-        else:
-            future.result()
+
+        # If metrics are disabled, this keeps the app running until the subscriber exits
+        # If they are enabled the above loop goes until the subscriber exits, and this
+        # raises an exception if one occurred, or does nothing
+        future.result()
+
     except Exception:
         future.cancel()
         raise
