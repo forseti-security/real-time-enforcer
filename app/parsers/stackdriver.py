@@ -245,6 +245,15 @@ class StackdriverParser():
             }
             add_resource()
 
+        elif res_type == "gce_network":
+            resource_data = {
+                'resource_type': 'compute.googleapis.com/Network',
+                'name': prop("protoPayload.resourceName").split('/')[-1],
+                'project_id': prop("resource.labels.project_id"),
+            }
+            print(resource_data)
+            add_resource()
+
         elif res_type == "gce_subnetwork":
             resource_data = {
                 'resource_type': 'compute.googleapis.com/Subnetwork',
